@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="5dp">
+
+
+    <TextView
+        android:id="@+id/txt_nombreUsuario"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:text="Texto"
+        android:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/txt_dniPutExtra"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:text="Texto"
+        android:visibility="invisible"/>
+
+    <TextView
+        android:id="@+id/txt_turno"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:text="Texto"
+        android:visibility="invisible"/>
+
+    <TextView
+        android:id="@+id/txt_idcolegio"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:text="Texto"
+        android:visibility="invisible"/>
+
+    <TextView
+        android:id="@+id/txt_nombreDocente"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:text="Texto"
+        android:visibility="invisible"/>
+
+    <TextView
+        android:id="@+id/txt_colegioPutExtra"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:text="Texto"
+        android:visibility="invisible" />
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <ImageButton
+            android:id="@+id/btnReloj"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginLeft="20dp"
+            android:layout_weight="0"
+            android:scaleType="centerInside"
+            app:srcCompat="@drawable/reloj" />
+    </FrameLayout>
+
+    <EditText
+        android:id="@+id/txt_usuario"
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="20dp"
+        android:layout_weight="1"
+        android:background="@drawable/round_grey"
+        android:textSize="14sp"></EditText>
+
+</LinearLayout>
