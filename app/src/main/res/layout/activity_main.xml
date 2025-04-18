@@ -1,169 +1,127 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="appAsis.example.asistenciaugelpomabamba2.MainActivity"
-    tools:layout_editor_absoluteX="0dp"
-    tools:layout_editor_absoluteY="-55dp">
-
+    android:background="@color/white"
+    tools:context="appAsis.example.asistenciaugelcorongo.MainActivity">
 
     <ImageView
-        android:id="@+id/imageView"
-        android:layout_width="match_parent"
-        android:layout_height="285dp"
-        android:layout_marginTop="48dp"
+        android:id="@+id/imageView2"
+        android:layout_width="141dp"
+        android:layout_height="155dp"
+        android:layout_marginTop="7dp"
+        android:layout_marginEnd="1dp"
+        android:layout_marginBottom="8dp"
         android:scaleType="centerInside"
+        app:layout_constraintBottom_toTopOf="@+id/txtCodmodular"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_bias="0.501"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:srcCompat="@drawable/imgdocentelogin" />
-
-    <ImageView
-        android:id="@+id/imageView3"
-        android:layout_width="65dp"
-        android:layout_height="59dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.927"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.038"
+        app:layout_constraintTop_toBottomOf="@+id/textView"
+        app:layout_constraintVertical_bias="0.0"
         app:srcCompat="@drawable/logocorongo2" />
 
     <TextView
         android:id="@+id/textView8"
-        android:layout_width="154dp"
-        android:layout_height="35dp"
-        android:text="INICIO SESIÓN"
-        android:textAlignment="textStart"
-        android:textColor="#000000"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="13dp"
+        android:text="SISTEMA DE ASISTENCIA"
+        android:textColor="@color/rgb_azulnoche"
         android:textSize="20sp"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.098"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.037" />
+        app:layout_constraintTop_toBottomOf="@+id/imageView" />
 
     <TextView
-        android:id="@+id/textView10"
-        android:layout_width="80dp"
-        android:layout_height="27dp"
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
         android:text="UGEL CORONGO"
-        android:textAlignment="center"
-        android:textColor="#000000"
-        android:textSize="10sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.951"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.119" />
-
-    <TextView
-        android:id="@+id/textView9"
-        android:layout_width="355dp"
-        android:layout_height="37dp"
-        android:text="SISTEMA DE ASISTENCIA UGEL - CORONGO"
-        android:textAlignment="center"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.553"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.508" />
-
-    <TextView
-        android:id="@+id/lblContrasenia"
-        android:layout_width="93dp"
-        android:layout_height="26dp"
-        android:layout_marginTop="168dp"
-        android:text="Contraseña"
-        android:textAlignment="center"
+        android:textColor="@color/rgb_azulnoche"
         android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/txtCodmodular"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.069"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.655" />
+        app:layout_constraintTop_toBottomOf="@+id/textView8"
+        app:layout_constraintVertical_bias="0.0" />
 
     <EditText
         android:id="@+id/txtCodmodular"
-        android:layout_width="209dp"
-        android:layout_height="59dp"
-        android:ems="10"
-        android:hint="Ingresar cod modular"
-        android:inputType="textPersonName"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="208dp"
+        android:layout_marginRight="16dp"
+        android:hint="Usuario"
+        android:inputType="textEmailAddress"
+        android:padding="12dp"
+        android:textColor="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.722"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.614" />
+        app:layout_constraintTop_toBottomOf="@+id/textView8" />
 
     <EditText
         android:id="@+id/txtPassword"
-        android:layout_width="209dp"
-        android:layout_height="59dp"
-        android:layout_marginTop="128dp"
-        android:ems="10"
-        android:hint="@string/stringPaswword"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginRight="16dp"
+        android:hint="Contraseña"
         android:inputType="textPassword"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:padding="12dp"
+        android:textColor="@color/black"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.722"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.694" />
+        app:layout_constraintTop_toBottomOf="@+id/txtCodmodular" />
+
+    <Button
+        android:id="@+id/btcLogin"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="16dp"
+        android:layout_marginTop="28dp"
+        android:layout_marginRight="16dp"
+        android:backgroundTint="@color/rgb_azulnoche"
+        android:onClick="login"
+        android:padding="12dp"
+        android:text="Entrar"
+        android:textColor="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/txtPassword" />
 
     <Button
         android:id="@+id/btnCambiopass"
         style="?android:attr/borderlessButtonStyle"
-        android:layout_width="262dp"
-        android:layout_height="41dp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:backgroundTint="@color/rgb_azul"
         android:onClick="cambioContra"
         android:text="¿Olvidaste tu contraseña?"
-        android:textColor="#2765DF"
+        android:textColor="@color/rgb_azul"
         android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.496"
+        app:layout_constraintHorizontal_bias="0.497"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.942" />
+        app:layout_constraintTop_toBottomOf="@+id/btcLogin"
+        app:layout_constraintVertical_bias="0.0" />
 
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="93dp"
-        android:layout_height="26dp"
-        android:text="Cod. Mod."
-        android:textAlignment="center"
-        android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="parent"
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="424dp"
+        android:layout_height="189dp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.069"
+        app:layout_constraintHorizontal_bias="0.507"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.611" />
-
-    <Button
-        android:id="@+id/btcLogin"
-        android:layout_width="136dp"
-        android:layout_height="49dp"
-        android:backgroundTint="#43D548"
-        android:onClick="login"
-        android:text="Entrar"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.87"
-        app:strokeColor="#F8F5F5"
-        app:strokeWidth="2dp" />
+        app:srcCompat="@drawable/nube_login" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

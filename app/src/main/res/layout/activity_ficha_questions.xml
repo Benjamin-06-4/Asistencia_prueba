@@ -1,0 +1,261 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Sección I: Datos Generales -->
+        <TextView
+            android:id="@+id/tvDatosGenerales"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="I. Datos Generales"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:paddingBottom="8dp" />
+
+        <!-- Institución Educativa -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Institución Educativa:" />
+            <EditText
+                android:id="@+id/etInstitucionEducativa"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint="Ingrese la institución" />
+        </LinearLayout>
+
+        <!-- Código Modular -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Código Modular:" />
+            <EditText
+                android:id="@+id/etCodigoModular"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint="Ingrese el código modular" />
+        </LinearLayout>
+
+        <!-- Nivel Educativo -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nivel Educativo:" />
+            <EditText
+                android:id="@+id/etNivelEducativo"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint="Ingrese el nivel educativo" />
+        </LinearLayout>
+
+        <!-- Fecha de Monitoreo -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fecha de Monitoreo:" />
+            <EditText
+                android:id="@+id/etFechaMonitoreo"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint="Fecha automática"
+                android:enabled="false" />
+        </LinearLayout>
+
+        <!-- Responsable del Monitoreo -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="16dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Responsable:" />
+            <EditText
+                android:id="@+id/etResponsable"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint="Se saca del usuario"
+                android:enabled="false" />
+        </LinearLayout>
+
+        <!-- Sección II: Planificación y Gestión -->
+        <TextView
+            android:id="@+id/tvPlanificacion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="II. Planificación y gestión"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:paddingBottom="8dp" />
+
+        <!-- Pregunta 1 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="¿Se cuenta con un equipo responsable de la implementación y seguimiento del plan?"
+            android:paddingBottom="4dp" />
+        <RadioGroup
+            android:id="@+id/rgEquipoResponsable"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="8dp">
+            <RadioButton
+                android:id="@+id/rbEquipoSi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sí" />
+            <RadioButton
+                android:id="@+id/rbEquipoNo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No" />
+        </RadioGroup>
+        <Button
+            android:id="@+id/btnFotoEquipo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enviar foto" />
+
+        <!-- Pregunta 2 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="¿Existe un plan de refuerzo escolar elaborado y socializado?"
+            android:paddingTop="12dp"
+            android:paddingBottom="4dp" />
+        <RadioGroup
+            android:id="@+id/rgPlanRefuerzo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="8dp">
+            <RadioButton
+                android:id="@+id/rbPlanRefuerzoSi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sí" />
+            <RadioButton
+                android:id="@+id/rbPlanRefuerzoNo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No" />
+        </RadioGroup>
+        <Button
+            android:id="@+id/btnFotoPlanRefuerzo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enviar foto" />
+
+        <!-- Pregunta 3 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="¿El plan incluye diagnóstico de necesidades, objetivos, actividades, recursos y cronograma?"
+            android:paddingTop="12dp"
+            android:paddingBottom="4dp" />
+        <RadioGroup
+            android:id="@+id/rgDiagnostico"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="8dp">
+            <RadioButton
+                android:id="@+id/rbDiagnosticoSi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sí" />
+            <RadioButton
+                android:id="@+id/rbDiagnosticoNo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No" />
+        </RadioGroup>
+        <Button
+            android:id="@+id/btnFotoDiagnostico"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enviar foto" />
+
+        <!-- Pregunta 4 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="¿Se realizan reuniones periódicas de coordinación y evaluación?"
+            android:paddingTop="12dp"
+            android:paddingBottom="4dp" />
+        <RadioGroup
+            android:id="@+id/rgReuniones"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="8dp">
+            <RadioButton
+                android:id="@+id/rbReunionesSi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sí" />
+            <RadioButton
+                android:id="@+id/rbReunionesNo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No" />
+        </RadioGroup>
+        <Button
+            android:id="@+id/btnFotoReuniones"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enviar foto" />
+
+        <Button
+            android:id="@+id/btnEnviarFicha"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#BAAD30"
+            android:foregroundTint="#902020"
+            android:onClick="enviarFicha"
+            android:text="Enviar Ficha"
+            android:backgroundTint="@android:color/holo_red_light"
+            />
+
+    </LinearLayout>
+</ScrollView>

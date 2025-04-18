@@ -28,6 +28,24 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".FichaQuestionsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".HomeEspecialista"
+            android:exported="false" />
+        <activity
+            android:name=".Horarios_Docentes"
+            android:exported="false" />
+        <activity
+            android:name=".Docentes_Director"
+            android:exported="false" />
+        <activity
+            android:name=".Director"
+            android:exported="false" />
+        <activity
+            android:name=".HomeDocente"
+            android:exported="false" />
+        <activity
             android:name=".ListUsuario"
             android:exported="false" />
         <activity

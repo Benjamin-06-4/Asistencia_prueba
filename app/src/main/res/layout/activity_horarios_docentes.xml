@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <!-- Cabecera o banner -->
+    <LinearLayout
+        android:id="@+id/layout_list_horarios"
+        android:layout_width="match_parent"
+        android:layout_height="70dp"
+        android:gravity="center"
+        android:layout_marginTop="20dp">
+        <LinearLayout
+            android:layout_width="350dp"
+            android:layout_height="60dp"
+            android:orientation="horizontal"
+            android:gravity="center">
+            <TextView
+                android:id="@+id/txtCricketer"
+                android:layout_width="168dp"
+                android:layout_height="60dp"
+                android:text="DOCENTE - MAÑANA"
+                android:textSize="15sp"/>
+
+            <TextView
+                android:id="@+id/txt_director"
+                android:layout_width="168dp"
+                android:layout_height="60dp"
+                android:text="DIRECTOR"
+                android:textAlignment="center"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Contenedor scrollable para listar a los docentes -->
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="600dp">
+        <LinearLayout
+            android:id="@+id/layout_list"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"/>
+    </ScrollView>
+</LinearLayout>

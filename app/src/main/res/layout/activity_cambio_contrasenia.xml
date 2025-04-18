@@ -5,7 +5,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="appAsis.example.asistenciaugelpomabamba2.CambioContrasenia">
+    tools:context="appAsis.example.asistenciaugelcorongo.CambioContrasenia">
 
     <ImageView
         android:id="@+id/imageView4"
@@ -31,16 +31,16 @@
 
     <TextView
         android:id="@+id/textView6"
-        android:layout_width="160dp"
-        android:layout_height="25dp"
-        android:text="CODIGO MODULAR"
-        android:textAlignment="center"
+        android:layout_width="73dp"
+        android:layout_height="23dp"
+        android:text="USUARIO"
+        android:textAlignment="inherit"
         app:layout_constraintBottom_toBottomOf="@+id/imageView4"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.314"
+        app:layout_constraintHorizontal_bias="0.233"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.322" />
+        app:layout_constraintVertical_bias="0.323" />
 
     <EditText
         android:id="@+id/txtcodmod"
@@ -91,7 +91,7 @@
         android:layout_height="wrap_content"
         android:backgroundTint="#43D548"
         android:onClick="solicitarCambio"
-        android:text="SOLICITAR CAMBIO"
+        android:text="CAMBIAR CONTRASEÑA"
         app:layout_constraintBottom_toBottomOf="@+id/imageView4"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.498"

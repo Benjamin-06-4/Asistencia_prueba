@@ -3,7 +3,7 @@ plugins {
 }
 
 android {
-    namespace 'appAsis.example.asistenciaugelpomabamba2'
+    namespace 'appAsis.example.asistenciaugelcorongo'
     compileSdk 33
 
     buildTypes {
@@ -18,7 +18,7 @@ android {
     }
 
     defaultConfig {
-        applicationId "appAsis.example.asistenciaugelpomabamba2"
+        applicationId "appAsis.example.asistenciaugelcorongo"
         minSdk 24
         targetSdk 33
         versionCode 41

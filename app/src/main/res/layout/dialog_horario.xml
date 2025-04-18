@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/tv_docente"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Docente:"/>
+
+    <TextView
+        android:id="@+id/tv_docente_nombre"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Nombre del docente"
+        android:textStyle="bold"/>
+
+    <TextView
+        android:id="@+id/tv_horaIngreso"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Establece hora ingreso:"/>
+
+    <EditText
+        android:id="@+id/et_horaIngreso"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="hh:mm"
+        android:inputType="time"/>
+
+    <TextView
+        android:id="@+id/tv_horaSalida"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Establece hora salida:"/>
+
+    <EditText
+        android:id="@+id/et_horaSalida"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="hh:mm"
+        android:inputType="time"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:layout_marginTop="20dp">
+
+        <Button
+            android:id="@+id/btn_si"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Sí"/>
+
+        <Button
+            android:id="@+id/btn_no"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No"
+            android:layout_marginStart="16dp"/>
+    </LinearLayout>
+</LinearLayout>
