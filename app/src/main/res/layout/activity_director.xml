@@ -47,31 +47,31 @@
 
     <ImageButton
         android:id="@+id/btc_asistencias_director"
-        android:layout_width="75dp"
-        android:layout_height="75dp"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
         android:onClick="asistencias"
         android:scaleType="centerInside"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.318"
+        app:layout_constraintHorizontal_bias="0.18"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.378"
+        app:layout_constraintVertical_bias="0.347"
         app:srcCompat="@drawable/icon_asistencia" />
 
     <ImageButton
         android:id="@+id/btc_horarios_director"
-        android:layout_width="75dp"
-        android:layout_height="75dp"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
         android:layout_marginTop="64dp"
         android:onClick="horarios"
         android:scaleType="centerInside"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.318"
+        app:layout_constraintHorizontal_bias="0.18"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.511"
+        app:layout_constraintVertical_bias="0.615"
         app:srcCompat="@drawable/icon_horarios" />
 
     <TextView
@@ -90,63 +90,99 @@
 
     <TextView
         android:id="@+id/textView2"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="124dp"
+        android:layout_width="100dp"
+        android:layout_height="28dp"
+        android:layout_marginStart="56dp"
+        android:layout_marginTop="8dp"
         android:text="ASISTENCIAS"
-        android:textSize="14sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.833"
-        app:layout_constraintStart_toEndOf="@+id/btc_asistencias_director"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.39" />
+        android:textAlignment="center"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/btc_horarios_director"
+        app:layout_constraintEnd_toStartOf="@+id/textView4"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btc_asistencias_director"
+        app:layout_constraintVertical_bias="0.0" />
+
 
     <TextView
         android:id="@+id/textView3"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="108dp"
+        android:layout_height="38dp"
+        android:layout_marginStart="56dp"
+        android:layout_marginTop="8dp"
         android:text="ASIGNACION HORARIO"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/textView12"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btc_horarios_director"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/textView12"
+        android:layout_width="108dp"
+        android:layout_height="38dp"
+        android:layout_marginEnd="72dp"
+        android:text="REPORTE ASISTENCIA"
+        android:textAlignment="center"
+        android:textSize="16sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.156"
-        app:layout_constraintStart_toEndOf="@+id/btc_horarios_director"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.56" />
+        app:layout_constraintTop_toBottomOf="@+id/btc_reporte_asistencia"
+        app:layout_constraintVertical_bias="0.044" />
 
     <TextView
         android:id="@+id/textView4"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="100dp"
+        android:layout_height="28dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="80dp"
         android:text="DOCENTES"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:textAlignment="center"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/btc_reporte_asistencia"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.097"
-        app:layout_constraintStart_toEndOf="@+id/btc_docentes_director"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.713" />
+        app:layout_constraintTop_toBottomOf="@+id/btc_docentes_director"
+        app:layout_constraintVertical_bias="0.0" />
 
     <ImageButton
         android:id="@+id/btc_docentes_director"
-        android:layout_width="75dp"
-        android:layout_height="75dp"
-        android:scaleType="centerInside"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
         android:onClick="docentes"
+        android:scaleType="centerInside"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.318"
+        app:layout_constraintHorizontal_bias="0.742"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.739"
+        app:layout_constraintVertical_bias="0.347"
         app:srcCompat="@drawable/icon_docentes" />
+
+    <ImageButton
+        android:id="@+id/btc_reporte_asistencia"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:onClick="reporte_asistencia"
+        android:scaleType="centerInside"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.742"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.654"
+        app:srcCompat="@drawable/icon_excel" />
 
     <TextView
         android:id="@+id/lblMensajeNotifica"
         android:layout_width="63dp"
         android:layout_height="28dp"
         android:text="Texto"
-        tools:layout_editor_absoluteX="1dp"
-        tools:layout_editor_absoluteY="1dp"
         android:visibility="invisible"
-        tools:ignore="MissingConstraints" />
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="1dp"
+        tools:layout_editor_absoluteY="1dp" />
 </androidx.constraintlayout.widget.ConstraintLayout>
