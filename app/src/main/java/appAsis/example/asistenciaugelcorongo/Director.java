@@ -34,9 +34,11 @@ import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
+import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -46,8 +48,14 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Director extends AppCompatActivity {
     // Botón para registrar asistencia (se usará tanto por docente como director)
@@ -112,73 +120,67 @@ public class Director extends AppCompatActivity {
         showPeriodoDialog();
     }
 
+    // Metodo para mostrar el diálogo de selección de período (año y mes)
     private void showPeriodoDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        AlertDialog.Builder builder = new AlertDialog.Builder(Director.this);
         LayoutInflater inflater = getLayoutInflater();
-        View dialogView = inflater.inflate(R.layout.dialog_periodo, null);
-        builder.setView(dialogView);
+        View view = inflater.inflate(R.layout.dialog_periodo, null);
+        builder.setView(view);
 
-        @SuppressLint({"MissingInflatedId", "LocalSuppress"}) final Spinner spinnerYear = dialogView.findViewById(R.id.spinnerYear);
-        @SuppressLint({"MissingInflatedId", "LocalSuppress"}) final Spinner spinnerMonth = dialogView.findViewById(R.id.spinnerMonth);
+        final Spinner spinnerYear = view.findViewById(R.id.spinnerYear);
+        final Spinner spinnerMonth = view.findViewById(R.id.spinnerMonth);
 
-        // Rellenar Spinner de años: se muestran, por ejemplo, los últimos 5 años hasta el actual
         int currentYear = Calendar.getInstance().get(Calendar.YEAR);
         ArrayList<Integer> years = new ArrayList<>();
-        for (int y = currentYear; y <= currentYear; y++) {
+        for (int y = currentYear; y <= 2099; y++) {
             years.add(y);
         }
-        ArrayAdapter<Integer> adapterYears = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, years);
+        ArrayAdapter<Integer> adapterYears = new ArrayAdapter<>(Director.this, android.R.layout.simple_spinner_item, years);
         adapterYears.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerYear.setAdapter(adapterYears);
 
-        // Rellenar Spinner de meses (1 a 12)
         ArrayList<Integer> months = new ArrayList<>();
         for (int m = 1; m <= 12; m++) {
             months.add(m);
         }
-        ArrayAdapter<Integer> adapterMonths = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, months);
+        ArrayAdapter<Integer> adapterMonths = new ArrayAdapter<>(Director.this, android.R.layout.simple_spinner_item, months);
         adapterMonths.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerMonth.setAdapter(adapterMonths);
 
         builder.setTitle("Seleccione Año y Mes")
-                .setPositiveButton("Aceptar", new DialogInterface.OnClickListener() {
+                .setPositiveButton("Aceptar", new DialogInterface.OnClickListener(){
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         int selectedYear = (Integer) spinnerYear.getSelectedItem();
                         int selectedMonth = (Integer) spinnerMonth.getSelectedItem();
 
-                        // Obtener el año y mes actual
-                        Calendar cal = Calendar.getInstance();
-                        int currentY = cal.get(Calendar.YEAR);
-                        int currentM = cal.get(Calendar.MONTH); // MONTH es 0-based establecer en la fase de lanzamiento + 1
-
-                        // Validación: si el periodo seleccionado es mayor o igual al actual
-                        if (selectedYear > currentY || (selectedYear == currentY && selectedMonth >= currentM)) {
+                        // Evitamos períodos mayores o iguales al mes actual
+                        Calendar now = Calendar.getInstance();
+                        int nowYear = now.get(Calendar.YEAR);
+                        int nowMonth = now.get(Calendar.MONTH) + 2;
+                        if (selectedYear > nowYear || (selectedYear == nowYear && selectedMonth >= nowMonth)) {
                             Toast.makeText(Director.this, "Este periodo no está habilitado para descargar reporte", Toast.LENGTH_LONG).show();
                         } else {
-                            // Formatear el período, por ejemplo "2022-03"
-                            String period = selectedYear + "-" + (selectedMonth < 10 ? "0" + selectedMonth : selectedMonth);
-                            generateReporteExcel(period);
+                            String monthStr = (selectedMonth < 10) ? "0" + selectedMonth : String.valueOf(selectedMonth);
+                            String period = selectedYear + "-" + monthStr;
+                            fetchTeachersAndGenerateReport(period);
                         }
                     }
                 })
                 .setNegativeButton("Cancelar", null);
-        AlertDialog dialog = builder.create();
-        dialog.show();
+        builder.create().show();
     }
 
-    // Metodo para obtener los docentes y generar el Excel
-    private void generateReporteExcel(final String period) {
-        // URL para obtener los docentes (asegúrate de que los parámetros son los correctos)
+    // Consulta la lista de docentes y, luego, obtiene feriados y procede a cargar horarios y asistencias
+    private void fetchTeachersAndGenerateReport(final String period) {
         String urlDocentes = "https://ugelcorongo.pe/ugelasistencias_docente/model/auxasistencia/verDocentesColegios.php"
                 + "?colegio=" + colegio + "&estado=ACTIVO";
-
-        RequestQueue queue = Volley.newRequestQueue(this);
-        JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(Request.Method.GET, urlDocentes, null,
-                new Response.Listener<JSONArray>() {
+        RequestQueue queue = Volley.newRequestQueue(Director.this);
+        JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, urlDocentes, null,
+                new Response.Listener<JSONArray>(){
                     @Override
                     public void onResponse(JSONArray response) {
-                        ArrayList<Teacher> teachers = new ArrayList<>();
+                        final ArrayList<Teacher> teachers = new ArrayList<>();
                         try {
                             for (int i = 0; i < response.length(); i++) {
                                 JSONObject obj = response.getJSONObject(i);
@@ -192,64 +194,290 @@ public class Director extends AppCompatActivity {
                                 teacher.setContratoInicio(obj.getString("contrato_inicio"));
                                 teachers.add(teacher);
                             }
-                            exportExcelReport(teachers, period);
                         } catch (JSONException e) {
                             e.printStackTrace();
-                            Toast.makeText(Director.this, "Error al procesar datos", Toast.LENGTH_LONG).show();
+                            Toast.makeText(Director.this, "Error al procesar docentes", Toast.LENGTH_LONG).show();
+                            return;
                         }
+                        // Primero obtener feriados para el período
+                        fetchHolidaysForPeriod(period, new HolidaysCallback(){
+                            @Override
+                            public void onHolidaysLoaded(Set<String> holidays) {
+                                // Luego, para cada docente se obtienen su horario y luego su asistencia
+                                fetchSchedulesAndAttendanceAndGenerateReport(teachers, period, holidays);
+                            }
+                        });
                     }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(Director.this, "Error en la conexión", Toast.LENGTH_LONG).show();
-                    }
-                });
-        queue.add(jsonArrayRequest);
+                }, new Response.ErrorListener(){
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Toast.makeText(Director.this, "Error de conexión docentes", Toast.LENGTH_LONG).show();
+            }
+        });
+        queue.add(request);
     }
 
-    // Metodo para generar y guardar el reporte Excel con la plantilla
-    private void exportExcelReport(ArrayList<Teacher> teachers, String period) {
-        try {
-            // Crear el Workbook y la hoja
-            Workbook workbook = new HSSFWorkbook();
-            Sheet sheet = workbook.createSheet("Reporte " + period);
-            int rowIndex = 0;
+    // Callback para devolver el Set de feriados
+    private interface HolidaysCallback {
+        void onHolidaysLoaded(Set<String> holidays);
+    }
 
-            // Encabezado: datos fijos + columnas para los días (1 al 31)
-            Row rowHeader = sheet.createRow(rowIndex++);
-            int cellIndex = 0;
-            rowHeader.createCell(cellIndex++).setCellValue("N°");
-            rowHeader.createCell(cellIndex++).setCellValue("DNI");
-            rowHeader.createCell(cellIndex++).setCellValue("Apellidos y Nombres");
-            rowHeader.createCell(cellIndex++).setCellValue("Cargo");
-            rowHeader.createCell(cellIndex++).setCellValue("Condición");
-            rowHeader.createCell(cellIndex++).setCellValue("Nivel Educativo");
-            rowHeader.createCell(cellIndex++).setCellValue("Jor.Lab");
+    // Consulta la URL verFeriados.php y llena el Set de feriados
+    private void fetchHolidaysForPeriod(final String period, final HolidaysCallback callback) {
+        String urlFeriados = "https://ugelcorongo.pe/ugelasistencias_docente/model/auxasistencia/verFeriados.php?periodo=" + period;
+        RequestQueue queue = Volley.newRequestQueue(Director.this);
+        JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, urlFeriados, null,
+                new Response.Listener<JSONArray>(){
+                    @Override
+                    public void onResponse(JSONArray response) {
+                        Set<String> holidays = new HashSet<>();
+                        try {
+                            for (int i = 0; i < response.length(); i++) {
+                                JSONObject obj = response.getJSONObject(i);
+                                holidays.add(obj.getString("fecha_feriado"));
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        callback.onHolidaysLoaded(holidays);
+                    }
+                }, new Response.ErrorListener(){
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                error.printStackTrace();
+                callback.onHolidaysLoaded(new HashSet<String>());
+            }
+        });
+        queue.add(request);
+    }
+
+    // Obtiene el horario del docente (campo llegada) a partir de verHorarios.php
+    private void fetchScheduleForTeacher(final Teacher teacher, final Runnable onComplete) {
+        try {
+            String url = "https://ugelcorongo.pe/ugelasistencias_docente/model/auxasistencia/verHorarios.php"
+                    + "?colegio=" + URLEncoder.encode(colegio, "UTF-8")
+                    + "&docente=" + URLEncoder.encode(teacher.getName(), "UTF-8");
+            StringRequest request = new StringRequest(Request.Method.GET, url,
+                    new Response.Listener<String>(){
+                        @Override
+                        public void onResponse(String response) {
+                            String[] lines = response.split("\n");
+                            if (lines.length > 0) {
+                                String firstLine = lines[0];
+                                String[] parts = firstLine.split(";");
+                                if (parts.length >= 4) {
+                                    String llegada = parts[3].trim();
+                                    teacher.setHorarioLlegada(llegada);
+                                }
+                            }
+                            onComplete.run();
+                        }
+                    },
+                    new Response.ErrorListener(){
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            error.printStackTrace();
+                            teacher.setHorarioLlegada("08:00"); // Valor por defecto
+                            onComplete.run();
+                        }
+                    });
+            RequestQueue queue = Volley.newRequestQueue(Director.this);
+            queue.add(request);
+        } catch (Exception e) {
+            e.printStackTrace();
+            teacher.setHorarioLlegada("08:00");
+            onComplete.run();
+        }
+    }
+
+    // Obtiene la asistencia del docente mediante verAsistenciaDocentesDirector.php y llena el mapa asistenciaPorDia
+    private void fetchAttendanceForTeacher(final Teacher teacher, final String period, final Runnable onComplete) {
+        try {
+            String urlAttendance = "https://ugelcorongo.pe/ugelasistencias_docente/model/auxasistencia/verAsistenciaDocentesDirector.php"
+                    + "?colegio=" + URLEncoder.encode(colegio, "UTF-8")
+                    + "&periodo=" + URLEncoder.encode(period, "UTF-8")
+                    + "&docente=" + URLEncoder.encode(teacher.getName(), "UTF-8")
+                    + "&turno=ENTRADA";
+
+            RequestQueue queue = Volley.newRequestQueue(Director.this);
+            JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, urlAttendance, null,
+                    new Response.Listener<JSONArray>(){
+                        @Override
+                        public void onResponse(JSONArray response) {
+                            try {
+                                for (int i = 0; i < response.length(); i++) {
+                                    JSONObject obj = response.getJSONObject(i);
+                                    // Se espera que el campo "fecha_registro" tenga el formato "YYYY-MM-DD HH:mm:ss"
+                                    String fechaRegistro = obj.getString("t_llegada");
+                                    String[] parts = fechaRegistro.split(" ");
+                                    String fecha = parts[0]; // "YYYY-MM-DD"
+                                    int dia = Integer.parseInt(fecha.split("-")[2]);
+
+                                    teacher.getAsistenciaPorDia().put(dia, fechaRegistro);
+                                }
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                            onComplete.run();
+                        }
+                    },
+                    new Response.ErrorListener(){
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            error.printStackTrace();
+                            onComplete.run();
+                        }
+                    });
+            queue.add(request);
+        } catch (Exception e) {
+            e.printStackTrace();
+            onComplete.run();
+        }
+    }
+
+    // Para cada docente, obtiene su horario y asistencia antes de generar el reporte
+    private void fetchSchedulesAndAttendanceAndGenerateReport(final ArrayList<Teacher> teachers, final String period, final Set<String> holidays) {
+        final AtomicInteger count = new AtomicInteger(0);
+        final int total = teachers.size();
+        for (final Teacher teacher : teachers) {
+            fetchScheduleForTeacher(teacher, new Runnable(){
+                @Override
+                public void run() {
+                    fetchAttendanceForTeacher(teacher, period, new Runnable(){
+                        @Override
+                        public void run() {
+                            if (count.incrementAndGet() == total) {
+                                exportExcelReportWithAttendanceSummary(teachers, period, holidays);
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    // Genera el Excel con dos hojas: "Detalle ..." y "Resumen ..."
+    private void exportExcelReportWithAttendanceSummary(ArrayList<Teacher> teachers, String period, Set<String> holidays) {
+        try {
+            SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
+            String[] parts = period.split("-");
+            int year = Integer.parseInt(parts[0]);
+            int month = Integer.parseInt(parts[1]);
+            Calendar cal = Calendar.getInstance();
+            cal.set(year, month - 1, 1);
+            int maxDay = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
+
+            Workbook workbook = new HSSFWorkbook();
+            Sheet sheetDiario = workbook.createSheet("Detalle " + period);
+            Sheet sheetResumen = workbook.createSheet("Resumen " + period);
+
+            int rowIndexDiario = 0, rowIndexResumen = 0, cellIndex;
+
+            // Encabezado de hoja DIARIO
+            Row rowHeaderDiario = sheetDiario.createRow(rowIndexDiario++);
+            cellIndex = 0;
+            rowHeaderDiario.createCell(cellIndex++).setCellValue("N°");
+            rowHeaderDiario.createCell(cellIndex++).setCellValue("DNI");
+            rowHeaderDiario.createCell(cellIndex++).setCellValue("Apellidos y Nombres");
+            rowHeaderDiario.createCell(cellIndex++).setCellValue("Cargo");
+            rowHeaderDiario.createCell(cellIndex++).setCellValue("Condición");
+            rowHeaderDiario.createCell(cellIndex++).setCellValue("Nivel Educativo");
+            rowHeaderDiario.createCell(cellIndex++).setCellValue("Jor.Lab");
             for (int d = 1; d <= 31; d++) {
-                rowHeader.createCell(cellIndex++).setCellValue(String.valueOf(d));
+                rowHeaderDiario.createCell(cellIndex++).setCellValue(String.valueOf(d));
             }
 
-            // Llenado de filas para cada docente
+            // Encabezado de hoja RESUMEN
+            Row rowHeaderResumen = sheetResumen.createRow(rowIndexResumen++);
+            cellIndex = 0;
+            rowHeaderResumen.createCell(cellIndex++).setCellValue("N°");
+            rowHeaderResumen.createCell(cellIndex++).setCellValue("DNI");
+            rowHeaderResumen.createCell(cellIndex++).setCellValue("Apellidos y Nombres");
+            rowHeaderResumen.createCell(cellIndex++).setCellValue("Cargo");
+            rowHeaderResumen.createCell(cellIndex++).setCellValue("Condición");
+            rowHeaderResumen.createCell(cellIndex++).setCellValue("Nivel Educativo");
+            rowHeaderResumen.createCell(cellIndex++).setCellValue("Jor.Lab");
+            rowHeaderResumen.createCell(cellIndex++).setCellValue("Inasistencias");
+            rowHeaderResumen.createCell(cellIndex++).setCellValue("Tardanzas");
+
             int teacherCounter = 1;
             for (Teacher teacher : teachers) {
-                Row row = sheet.createRow(rowIndex++);
-                cellIndex = 0;
-                row.createCell(cellIndex++).setCellValue(teacherCounter++);
-                row.createCell(cellIndex++).setCellValue(teacher.getDni());
-                row.createCell(cellIndex++).setCellValue(teacher.getName());
-                row.createCell(cellIndex++).setCellValue(teacher.getCargo());
-                row.createCell(cellIndex++).setCellValue(teacher.getCondicion());
-                row.createCell(cellIndex++).setCellValue(teacher.getNivelEducativo());
-                row.createCell(cellIndex++).setCellValue(teacher.getJorLab());
-                for (int d = 1; d <= 31; d++) {
-                    row.createCell(cellIndex++).setCellValue("");
+                // Obtener el horario de llegada personalizado; si no, se usa "08:00"
+                String scheduleTimeStr = teacher.getHorarioLlegada();
+                if (scheduleTimeStr == null || scheduleTimeStr.isEmpty()) {
+                    scheduleTimeStr = "08:00";
                 }
+                Date teacherThreshold = timeFormat.parse(scheduleTimeStr);
+
+                int inasistencias = 0;
+                int tardanzaTotal = 0;
+
+                // Fila en hoja DIARIO para el docente
+                Row rowDiario = sheetDiario.createRow(rowIndexDiario++);
+                cellIndex = 0;
+                rowDiario.createCell(cellIndex++).setCellValue(teacherCounter);
+                rowDiario.createCell(cellIndex++).setCellValue(teacher.getDni());
+                rowDiario.createCell(cellIndex++).setCellValue(teacher.getName());
+                rowDiario.createCell(cellIndex++).setCellValue(teacher.getCargo());
+                rowDiario.createCell(cellIndex++).setCellValue(teacher.getCondicion());
+                rowDiario.createCell(cellIndex++).setCellValue(teacher.getNivelEducativo());
+                rowDiario.createCell(cellIndex++).setCellValue(teacher.getJorLab());
+
+                // Recorrido por días 1 a 31
+                for (int d = 1; d <= 31; d++) {
+                    Cell cell = rowDiario.createCell(cellIndex++);
+                    if (d > maxDay) {
+                        cell.setCellValue("");
+                        continue;
+                    }
+                    String dayStr = (d < 10) ? "0" + d : String.valueOf(d);
+                    String dateStr = period + "-" + dayStr;
+
+                    cal.set(year, month - 1, d);
+                    boolean esFinDeSemana = (cal.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY ||
+                            cal.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY);
+                    boolean esFeriado = holidays.contains(dateStr);
+
+                    if (esFinDeSemana || esFeriado) {
+                        cell.setCellValue("");
+                    } else {
+                        // Día laboral: buscar el registro en el mapa (clave: día)
+                        String registro = teacher.getAsistenciaPorDia().get(d);
+                        if (registro != null && !registro.isEmpty()) {
+                            String horaRegistro = registro.substring(registro.indexOf(" ") + 1, registro.indexOf(" ") + 6);
+                            Date teacherArrival = timeFormat.parse(horaRegistro);
+                            if (teacherArrival.compareTo(teacherThreshold) <= 0) {
+                                cell.setCellValue("A");
+                            } else {
+                                cell.setCellValue("T");
+                                long diffMillis = teacherArrival.getTime() - teacherThreshold.getTime();
+                                int diffMinutes = (int) (diffMillis / 60000);
+                                tardanzaTotal += diffMinutes;
+                            }
+                        } else {
+                            cell.setCellValue("I");
+                            inasistencias++;
+                        }
+                    }
+                }
+
+                // Fila en hoja RESUMEN para el docente
+                Row rowResumen = sheetResumen.createRow(rowIndexResumen++);
+                cellIndex = 0;
+                rowResumen.createCell(cellIndex++).setCellValue(teacherCounter);
+                rowResumen.createCell(cellIndex++).setCellValue(teacher.getDni());
+                rowResumen.createCell(cellIndex++).setCellValue(teacher.getName());
+                rowResumen.createCell(cellIndex++).setCellValue(teacher.getCargo());
+                rowResumen.createCell(cellIndex++).setCellValue(teacher.getCondicion());
+                rowResumen.createCell(cellIndex++).setCellValue(teacher.getNivelEducativo());
+                rowResumen.createCell(cellIndex++).setCellValue(teacher.getJorLab());
+                rowResumen.createCell(cellIndex++).setCellValue(inasistencias);
+                rowResumen.createCell(cellIndex++).setCellValue(tardanzaTotal);
+
+                teacherCounter++;
             }
 
-            // Se omite el autoSizeColumn ya que provoca crash en Android.
-
-            // Guardar el archivo en el directorio de la app.
+            // Se omite el autoajuste de columnas en Android para evitar crash
             String fileName = colegio + " reporte de asistencia " + period + ".xls";
             File file = new File(getExternalFilesDir(null), fileName);
             FileOutputStream fos = new FileOutputStream(file);
@@ -257,7 +485,7 @@ public class Director extends AppCompatActivity {
             fos.close();
             workbook.close();
 
-            // Notificar al usuario para abrir el archivo
+            Toast.makeText(Director.this, "Reporte generado en: " + file.getAbsolutePath(), Toast.LENGTH_LONG).show();
             showNotificationWithFile(file);
         } catch (Exception e) {
             e.printStackTrace();
@@ -265,61 +493,38 @@ public class Director extends AppCompatActivity {
         }
     }
 
-    // Metodo para solicitar permiso de notificación (para Android 13+)
-    private void requestNotificationPermission() {
+    private void showNotificationWithFile(File file) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(Director.this, Manifest.permission.POST_NOTIFICATIONS)
                     != PackageManager.PERMISSION_GRANTED) {
-                ActivityCompat.requestPermissions(Director.this,
-                        new String[]{Manifest.permission.POST_NOTIFICATIONS}, 100);
+                ActivityCompat.requestPermissions(Director.this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 100);
             }
         }
-    }
-
-    private void showNotificationWithFile(File file) {
-        // Primero, si aún no lo has hecho, solicita el permiso de notificaciones
-        requestNotificationPermission();
-
-        // Obtener el URI seguro usando FileProvider
         Uri fileUri = FileProvider.getUriForFile(Director.this,
-                Director.this.getApplicationContext().getPackageName() + ".provider",
+                getApplicationContext().getPackageName() + ".provider",
                 file);
-
-        // Crear un Intent para abrir el archivo Excel
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setDataAndType(fileUri, "application/vnd.ms-excel");
         intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        PendingIntent pendingIntent = PendingIntent.getActivity(Director.this, 0, intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        // Crear el PendingIntent
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-                Director.this,
-                0,
-                intent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
-
-        // Definir el canal y construir la notificación
         String channelId = "reporte_channel";
         NotificationCompat.Builder builder = new NotificationCompat.Builder(Director.this, channelId)
-                .setSmallIcon(R.drawable.logoapp) // Asegúrate que este ícono exista y sea visible.
+                .setSmallIcon(R.drawable.logoapp)
                 .setContentTitle("Reporte descargado")
                 .setContentText("Toca para abrir el reporte")
                 .setAutoCancel(true)
                 .setContentIntent(pendingIntent);
 
-        // Obtener NotificationManager
         NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-
-        // Para Android O+ crea el canal de notificaciones
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence channelName = "Reporte";
             int importance = NotificationManager.IMPORTANCE_DEFAULT;
             NotificationChannel channel = new NotificationChannel(channelId, channelName, importance);
             notificationManager.createNotificationChannel(channel);
         }
-
-        // Mostrar la notificación (se usa un ID único, por ejemplo 1)
         notificationManager.notify(1, builder.build());
     }
 }
