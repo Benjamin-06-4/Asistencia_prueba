@@ -46,10 +46,10 @@
         app:srcCompat="@drawable/logocorongo" />
 
     <ImageButton
-        android:id="@+id/btc_asistencias_director"
+        android:id="@+id/btc_fichas_especialistas"
         android:layout_width="75dp"
         android:layout_height="75dp"
-        android:onClick="asistencias"
+        android:onClick="fichas_especialistas"
         android:scaleType="centerInside"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
