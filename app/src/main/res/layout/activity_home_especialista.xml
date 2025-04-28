@@ -88,7 +88,7 @@
         app:srcCompat="@drawable/icon_fichas" />
 
     <ImageButton
-        android:id="@+id/btc_horarios_director"
+        android:id="@+id/btc_evidencias_especialistas"
         android:layout_width="100dp"
         android:layout_height="100dp"
         android:layout_marginTop="64dp"
