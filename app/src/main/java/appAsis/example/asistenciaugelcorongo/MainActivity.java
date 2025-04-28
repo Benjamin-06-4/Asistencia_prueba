@@ -377,49 +377,49 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void continuarLogin(String dniUsuario, String passwordIngresada) {
-        // Determinar el rol (Especialista, Director o Docente)
+        // Determinar el rol del usuario
         String rol = determinarRol(dniUsuario, passwordIngresada);
-        Intent home;
-
-        switch (rol) {
-            case "Especialista":
-                //home = new Intent(MainActivity.this, Especialistas.class);
-                home = new Intent(MainActivity.this, HomeEspecialista.class);
-                home.putExtra("filtro", "Especialista");
-                break;
-            case "Director":
-                //home = new Intent(MainActivity.this, login.class);
-                home = new Intent(MainActivity.this, Director.class);
-                home.putExtra("filtro", "Director");
-                break;
-            case "Docente":
-                //home = new Intent(MainActivity.this, ListUsuario.class);
-                home = new Intent(MainActivity.this, HomeDocente.class);
-                home.putExtra("filtro", "Docente");
-                break;
-            default:
-                Toast.makeText(MainActivity.this, "No se pudo determinar el rol del usuario.", Toast.LENGTH_SHORT).show();
-                return;
+        if (rol == null || rol.isEmpty()) {
+            Toast.makeText(MainActivity.this, "No se pudo determinar el rol del usuario.", Toast.LENGTH_SHORT).show();
+            return;
         }
 
-        // Extras que necesitan los activity's siguientes (Especialistas, login, ListUsuario)
+        // Aquí marcamos la sesión como iniciada
+        SessionManager sessionManager = new SessionManager(MainActivity.this);
+        sessionManager.createLoginSession();   // IMPORTANTE: marca al usuario como logueado.
+
+        Intent home = null;
+        if ("Especialista".equalsIgnoreCase(rol)) {
+            home = new Intent(MainActivity.this, HomeEspecialista.class);
+            home.putExtra("filtro", "Especialista");
+        } else if ("Director".equalsIgnoreCase(rol)) {
+            home = new Intent(MainActivity.this, Director.class);
+            home.putExtra("filtro", "Director");
+        } else if ("Docente".equalsIgnoreCase(rol)) {
+            home = new Intent(MainActivity.this, HomeDocente.class);
+            home.putExtra("filtro", "Docente");
+        } else {
+            Toast.makeText(MainActivity.this, "No se pudo determinar el rol del usuario.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Enviar extras necesarios
         home.putExtra("codmod", dniUsuario);
         home.putExtra("password", passwordIngresada);
-
         home.putExtra("pass", passwordIngresada);
         home.putExtra("dni", dniUsuario);
         home.putExtra("turnos", rol);
         home.putExtra("idcolegio", str_idcolegio);
         home.putExtra("colegio", str_colegio);
         home.putExtra("docente", str_usuario);
-        home.putExtra("notificacion","");
+        home.putExtra("notificacion", "");
         home.putExtra("nivelcolegio", str_nivelcolegio);
-
         home.putExtra("ubicaciones", "");
         home.putExtra("docentesexcel", "");
         home.putExtra("codmodput", dniUsuario);
 
-        // Inicia la actividad
+        // Limpiar pila para evitar volver al Login
+        home.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
         startActivity(home);
     }
 

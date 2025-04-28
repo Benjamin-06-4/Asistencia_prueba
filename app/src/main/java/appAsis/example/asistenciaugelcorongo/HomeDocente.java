@@ -61,7 +61,7 @@ import android.database.Cursor;
 import android.provider.OpenableColumns;
 
 public class HomeDocente extends AppCompatActivity {
-
+    // AppCompatActivity
     // Vistas y botones
     private ImageButton btc_asistencia;
 
@@ -814,4 +814,15 @@ public class HomeDocente extends AppCompatActivity {
             }
         }
     }
+
+    private void guardarArchivoInterno(String fileName, byte[] fileData) {
+        try {
+            FileOutputStream fos = openFileOutput(fileName, Context.MODE_PRIVATE);
+            fos.write(fileData);
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
