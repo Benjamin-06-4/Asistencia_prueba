@@ -17,11 +17,19 @@ import java.util.List;
 public class FichasAdapter extends ArrayAdapter<String> {
     private Context context;
     private List<String> fichas;
+    private String colegio;
+    private String idcolegio;
+    private String docente;
+    private String rol;
 
-    public FichasAdapter(@NonNull Context context, @NonNull List<String> fichas) {
+    public FichasAdapter(@NonNull Context context, @NonNull List<String> fichas, String colegio, String idcolegio, String docente, String rol) {
         super(context, 0, fichas);
         this.context = context;
         this.fichas = fichas;
+        this.colegio = colegio;
+        this.idcolegio = idcolegio;
+        this.docente = docente;
+        this.rol = rol;
     }
 
     @NonNull
@@ -46,6 +54,10 @@ public class FichasAdapter extends ArrayAdapter<String> {
             // para la ficha seleccionada (ej.: FichaQuestionsActivity)
             Intent intent = new Intent(context, FichaQuestionsActivity.class);
             intent.putExtra("fichaTitle", fichaTitle);
+            intent.putExtra("colegio", colegio);
+            intent.putExtra("idcolegio", idcolegio);
+            intent.putExtra("docente", docente);
+            intent.putExtra("rol", rol);
             context.startActivity(intent);
         });
 

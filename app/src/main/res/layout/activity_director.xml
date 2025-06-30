@@ -88,11 +88,12 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.907" />
 
+
     <TextView
         android:id="@+id/textView2"
-        android:layout_width="100dp"
-        android:layout_height="28dp"
-        android:layout_marginStart="56dp"
+        android:layout_width="114dp"
+        android:layout_height="31dp"
+        android:layout_marginStart="50dp"
         android:layout_marginTop="8dp"
         android:text="ASISTENCIAS"
         android:textAlignment="center"
@@ -104,11 +105,10 @@
         app:layout_constraintTop_toBottomOf="@+id/btc_asistencias_director"
         app:layout_constraintVertical_bias="0.0" />
 
-
     <TextView
         android:id="@+id/textView3"
-        android:layout_width="108dp"
-        android:layout_height="38dp"
+        android:layout_width="110dp"
+        android:layout_height="50dp"
         android:layout_marginStart="56dp"
         android:layout_marginTop="8dp"
         android:text="ASIGNACION HORARIO"
@@ -124,7 +124,7 @@
     <TextView
         android:id="@+id/textView12"
         android:layout_width="108dp"
-        android:layout_height="38dp"
+        android:layout_height="50dp"
         android:layout_marginEnd="72dp"
         android:text="REPORTE ASISTENCIA"
         android:textAlignment="center"

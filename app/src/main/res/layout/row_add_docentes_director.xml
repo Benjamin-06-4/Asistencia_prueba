@@ -24,7 +24,7 @@
     </FrameLayout>
 
     <TextView
-        android:id="@+id/txtHora"
+        android:id="@+id/txtHora_docentes"
         android:layout_width="70dp"
         android:layout_height="30dp"
         android:layout_marginRight="-10dp"

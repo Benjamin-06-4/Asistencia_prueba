@@ -47,7 +47,9 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -90,15 +92,91 @@ public class Director extends AppCompatActivity {
         txt_director.setText(docente);
     }
 
+    public interface VolleyCallback {
+        void onSuccess();
+    }
+
     public void asistencias(View view) {
-        Intent intent = new Intent(this, Docentes_Director.class);
+        // Llama a saveraw() con un callback anónimo
+        saveraw(new VolleyCallback() {
+            @Override
+            public void onSuccess() {
+                // Una vez escrita la información en el archivo, se inicia la actividad.
+                Intent intent = new Intent(Director.this, Docentes_Director.class);
+                intent.putExtra("idcolegio", idcolegio);
+                intent.putExtra("colegio", colegio);
+                intent.putExtra("docente", docente);
+                intent.putExtra("rol", rol);
+                startActivity(intent);
+            }
+        });
+    }
 
-        intent.putExtra("idcolegio",idcolegio);
-        intent.putExtra("colegio",colegio);
-        intent.putExtra("docente",docente);
-        intent.putExtra("rol",rol);
+    private void saveraw(final VolleyCallback callback) {
+        String urlDocentes = "https://ugelcorongo.pe/ugelasistencias_docente/model/personal/getPersonal.php";
+        RequestQueue queue = Volley.newRequestQueue(Director.this);
+        JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, urlDocentes, null,
+                new Response.Listener<JSONArray>() {
+                    @Override
+                    public void onResponse(JSONArray response) {
+                        final ArrayList<Teacher> teachers = new ArrayList<>();
+                        try {
+                            // Procesa el JSON para obtener la lista de docentes
+                            for (int i = 0; i < response.length(); i++) {
+                                JSONObject obj = response.getJSONObject(i);
+                                Teacher teacher = new Teacher();
+                                teacher.setColegio(obj.getString("colegio"));
+                                teacher.setDni(obj.getString("dni"));
+                                teacher.setApellido_paterno(obj.getString("apellido_paterno"));
+                                teacher.setApellido_materno(obj.getString("apellido_materno"));
+                                teacher.setNombres(obj.getString("nombres"));
+                                teacher.setId(obj.getString("id"));
+                                teacher.setNivelEducativo(obj.getString("nivel_educativo"));
+                                teacher.setCondicion(obj.getString("tipo_trabajador"));
+                                teachers.add(teacher);
+                            }
 
-        startActivity(intent);
+                            // Construye el contenido del archivo
+                            // Cada campo se separa por ";" y se finaliza cada registro con un salto de línea.
+                            StringBuilder sb = new StringBuilder();
+                            for (Teacher teacher : teachers) {
+                                sb.append(teacher.getDni()).append(";")
+                                        .append(teacher.getColegio()).append(";")
+                                        .append(teacher.getDni()).append(";")
+                                        .append(teacher.getApellido_paterno()).append(";")
+                                        .append(teacher.getApellido_materno()).append(";")
+                                        .append(teacher.getNombres()).append(";")
+                                        .append(teacher.getId()).append(";")
+                                        .append(teacher.getNivelEducativo()).append(";")
+                                        .append(teacher.getCondicion()).append("\n");
+                            }
+
+                            // Escribe el contenido en el archivo interno.
+                            // NOTA: Utilizamos "datadocentes.txt" en lugar de sobrescribir el archivo en res/raw,
+                            // ya que los recursos son de solo lectura en tiempo de ejecución.
+                            FileOutputStream fos = Director.this.openFileOutput("datadocentes.txt", Context.MODE_PRIVATE);
+                            fos.write(sb.toString().getBytes());
+                            fos.close();
+
+                            // Al finalizar, se invoca el callback para iniciar la actividad.
+                            callback.onSuccess();
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            Toast.makeText(Director.this, "Error al procesar docentes", Toast.LENGTH_LONG).show();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            Toast.makeText(Director.this, "Error al escribir el archivo", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                },
+                new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        Toast.makeText(Director.this, "Error de conexión docentes", Toast.LENGTH_LONG).show();
+                    }
+                });
+        queue.add(request);
     }
 
     public void horarios(View view) {
@@ -112,8 +190,13 @@ public class Director extends AppCompatActivity {
     }
 
     public void docentes(View view) {
-        //Intent intent = new Intent(this, DocentesActivity.class);
-        //startActivity(intent);
+        Intent intent = new Intent(this, RegistroDocente.class);
+
+        intent.putExtra("idcolegio",idcolegio);
+        intent.putExtra("colegio",colegio);
+        intent.putExtra("docente",docente);
+        intent.putExtra("rol",rol);
+        startActivity(intent);
     }
 
     public void reporte_asistencia(View view) {

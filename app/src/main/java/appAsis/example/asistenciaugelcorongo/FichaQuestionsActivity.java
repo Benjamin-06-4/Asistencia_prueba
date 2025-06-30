@@ -39,6 +39,11 @@ public class FichaQuestionsActivity extends AppCompatActivity {
     // 1 = Equipo, 2 = Plan Refuerzo, 3 = Diagnóstico, 4 = Reuniones.
     private int currentPhotoQuestion = 0;
 
+    private String idcolegio;
+    private String colegio;
+    private String docente;
+    private String rol;
+
     // Campos de datos generales
     private EditText etInstitucionEducativa, etCodigoModular, etNivelEducativo, etFechaMonitoreo, etResponsable;
     // RadioGroups para las respuestas (tipo Sí/No)
@@ -82,6 +87,11 @@ public class FichaQuestionsActivity extends AppCompatActivity {
         // Asignar la fecha actual y ejemplo de responsable (puedes obtener el usuario de sesión)
         etFechaMonitoreo.setText(getCurrentDate());
         etResponsable.setText("Responsable Ejemplo");
+
+        colegio = getIntent().getStringExtra("colegio");
+        idcolegio = getIntent().getStringExtra("idcolegio");
+        docente = getIntent().getStringExtra("docente");
+        rol = getIntent().getStringExtra("rol"); // "Docente" o "Director"
 
         // Configuración de "Enviar foto" para cada pregunta
         btnFotoEquipo.setOnClickListener(new View.OnClickListener() {

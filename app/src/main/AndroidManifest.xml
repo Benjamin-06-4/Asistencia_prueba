@@ -29,6 +29,9 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="31">
         <activity
+            android:name=".RegistroDocente"
+            android:exported="false" />
+        <activity
             android:name=".FichaQuestionsActivity"
             android:exported="false" />
         <activity

@@ -1,6 +1,8 @@
 package appAsis.example.asistenciaugelcorongo;
 
 import android.app.AlertDialog;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -13,6 +15,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatDelegate;
@@ -22,18 +25,26 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
@@ -48,6 +59,10 @@ public class HomeEspecialista extends BaseActivity {
     // Variables para determinar el registro de asistencia (Entrada/Salida)
     private boolean llegadaRegistrada = false;
     private boolean salidaRegistrada = false;
+    private String idcolegio; // ID de la I.E.
+    private String colegio;   // Ejemplo: "UNIDAD DE GESTION EDUCATIVA LOCAL CORONGO"
+    private String docente;   // Ejemplo: "ITURRIA HUAMAN ROBERT ALBERTO"
+    private String rol;       // "Docente" o "Director"
     private String horaLlegada = "";
     private String horaSalida = "";
 
@@ -64,7 +79,6 @@ public class HomeEspecialista extends BaseActivity {
         @Override
         public void run() {
             if (isOnline()) {
-                Log.d("COORD_RUN", "Especialista: CoordRunnable ejecutado");
                 obtenerCoordenadasActual();
                 enviarCoordenadas();
             }
@@ -85,6 +99,11 @@ public class HomeEspecialista extends BaseActivity {
         // Se recuperan las variables heredadas en BaseActivity: colegio, docente, rol, idcolegio.
         btc_asistencia = findViewById(R.id.btc_asistencias_especialista);
         btc_evidencia = findViewById(R.id.btc_evidencias_especialistas);
+
+        colegio = getIntent().getStringExtra("colegio");
+        idcolegio = getIntent().getStringExtra("idcolegio");
+        docente = getIntent().getStringExtra("docente");
+        rol = getIntent().getStringExtra("turnos"); // "Docente" o "Director"
 
         // Configuración del botón de asistencia
         btc_asistencia.setOnClickListener(new View.OnClickListener() {
@@ -121,6 +140,192 @@ public class HomeEspecialista extends BaseActivity {
                 mostrarPopupEvidencia();
             }
         });
+    }
+
+    public void fichas_especialistas(View view) {
+        fetchFichas();
+    }
+
+    /**
+     * Método para obtener las fichas:
+     * - Con conexión: consulta la URL, guarda TODOS los registros (activos e inactivos) en el archivo interno,
+     *   y luego muestra solo las fichas activas.
+     * - Sin conexión: lee el archivo y filtra las fichas activas comprobando también el rango de fechas.
+     */
+    private void fetchFichas() {
+        if (isOnline()) {
+            String urlFichas = "https://ugelcorongo.pe/ugelasistencias_docente/model/especialista/verFichas.php";
+            RequestQueue queue = Volley.newRequestQueue(HomeEspecialista.this);
+            JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(
+                    Request.Method.GET,
+                    urlFichas,
+                    null,
+                    new Response.Listener<JSONArray>() {
+                        @Override
+                        public void onResponse(JSONArray response) {
+                            // Guarda TODAS las fichas en datafichas.txt (activos e inactivos)
+                            guardarFichasEnArchivo(response.toString());
+                            // Muestra el diálogo filtrando solo las fichas activas (según el campo estado)
+                            mostrarDialogoFichas(response, false);
+                        }
+                    },
+                    new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            // Si hay error, se recurre a leer el archivo local
+                            readFichasFromFile();
+                        }
+                    }
+            );
+            queue.add(jsonArrayRequest);
+        } else {
+            // Sin conexión: leer la información almacenada en datafichas.txt y filtrar usando el rango de fechas.
+            readFichasFromFile();
+        }
+    }
+
+    /**
+     * Construye y muestra el diálogo con la lista de fichas.
+     * Si el parámetro offline es true, se asume que ya se filtró usando el rango de fechas.
+     * En caso contrario, se filtra solo por el campo "estado".
+     */
+    private void mostrarDialogoFichas(JSONArray fichas, boolean offline) {
+        final List<String> fichasList = new ArrayList<>();
+        try {
+            for (int i = 0; i < fichas.length(); i++) {
+                JSONObject obj = fichas.getJSONObject(i);
+                // En modo online se filtra por estado activo,
+                // y en modo offline ya se pasó por la validación del rango de fechas.
+                if (offline) {
+                    fichasList.add(obj.getString("nombre"));
+                } else {
+                    if (obj.getString("estado").equalsIgnoreCase("activo")) {
+                        fichasList.add(obj.getString("nombre"));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View popupView = getLayoutInflater().inflate(R.layout.dialog_fichas, null);
+        builder.setView(popupView);
+        builder.setTitle("Fichas");
+
+        builder.setNegativeButton("Cerrar", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+
+        ListView listViewFichas = popupView.findViewById(R.id.listFichas);
+        FichasAdapter adapter = new FichasAdapter(this, fichasList, colegio, idcolegio, docente, rol);
+        listViewFichas.setAdapter(adapter);
+
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    /**
+     * Guarda la cadena recibida en un archivo interno.
+     */
+    private void guardarFichasEnArchivo(String data) {
+        try {
+            FileOutputStream fos = openFileOutput("datafichas.txt", Context.MODE_PRIVATE);
+            fos.write(data.getBytes());
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Lee el archivo datafichas.txt y muestra la información.
+     */
+    private void readFichasFromFile() {
+        try {
+            FileInputStream fis = openFileInput("datafichas.txt");
+            InputStreamReader isr = new InputStreamReader(fis);
+            BufferedReader reader = new BufferedReader(isr);
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+            fis.close();
+            String data = sb.toString();
+            if (data.trim().startsWith("[")) {
+                JSONArray jsonArray = new JSONArray(data);
+                // En modo offline se filtra también comprobando que la fecha actual esté dentro del rango
+                jsonArray = filtrarFichasActivasOffline(jsonArray);
+                mostrarDialogoFichas(jsonArray, true);
+            } else {
+                // Caso de archivo en formato de texto plano (línea por línea)
+                ArrayList<JSONObject> fichasList = new ArrayList<>();
+                String[] lines = data.split("\n");
+                for (String l : lines) {
+                    if (l.trim().isEmpty()) continue;
+                    // Se espera formato: nombre ficha; fecha_inicio; fecha_termino; estado
+                    String[] parts = l.split(";");
+                    if (parts.length >= 4) {
+                        JSONObject obj = new JSONObject();
+                        obj.put("nombre", parts[0].trim());
+                        obj.put("fecha_inicio", parts[1].trim());
+                        obj.put("fecha_termino", parts[2].trim());
+                        obj.put("estado", parts[3].trim());
+                        fichasList.add(obj);
+                    }
+                }
+                JSONArray jsonArray = new JSONArray();
+                for (JSONObject obj : fichasList) {
+                    jsonArray.put(obj);
+                }
+                // Se filtra en modo offline
+                jsonArray = filtrarFichasActivasOffline(jsonArray);
+                mostrarDialogoFichas(jsonArray, true);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            // En caso de error se muestra el diálogo sin registros
+            mostrarDialogoFichas(new JSONArray(), true);
+        }
+    }
+
+    /**
+     * En modo offline, filtra las fichas comprobando que:
+     * 1) El estado sea "activo"
+     * 2) La fecha actual se encuentre entre fecha_inicio y fecha_termino
+     */
+    private JSONArray filtrarFichasActivasOffline(JSONArray fichas) {
+        JSONArray result = new JSONArray();
+        try {
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Date now = new Date();
+
+            // Recorrer cada ficha y actualizar su estado según el rango de fechas
+            for (int i = 0; i < fichas.length(); i++) {
+                JSONObject obj = fichas.getJSONObject(i);
+                Date inicio = sdf.parse(obj.getString("fecha_inicio"));
+                Date fin = sdf.parse(obj.getString("fecha_termino"));
+
+                // Si la fecha actual se encuentra entre inicio y fin, la ficha es activa
+                if (now.compareTo(inicio) >= 0 && now.compareTo(fin) <= 0) {
+                    obj.put("estado", "activo");
+                    result.put(obj);
+                } else {
+                    obj.put("estado", "inactivo");
+                }
+            }
+
+            // Actualizamos el archivo interno con la versión modificada del JSONArray
+            guardarFichasEnArchivo(fichas.toString());
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 
     @Override

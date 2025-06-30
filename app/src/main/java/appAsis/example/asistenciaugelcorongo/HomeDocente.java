@@ -752,7 +752,7 @@ public class HomeDocente extends AppCompatActivity {
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(HomeDocente.this, "Error al subir evidencia", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(HomeDocente.this, colegio + ", " + docente + ", " + rol + ", " + idcolegio, Toast.LENGTH_SHORT).show();
                     }
                 }
         ) {

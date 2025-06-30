@@ -58,6 +58,7 @@ public class Docentes_Director extends AppCompatActivity {
     // Elementos de la interfaz definidos en activity_docentes_director.xml
     private TextView txtCricketer;      // Usado para mostrar el nombre del colegio (puedes cambiarlo por el que prefieras)
     private TextView txt_director;  // Segundo TextView (en el layout, lo dejamos como ejemplo)
+    private TextView txtHora;
     private String str_docente = "";
     private LinearLayout container;     // Contenedor donde se agregarán las filas de docentes
 
@@ -143,7 +144,7 @@ public class Docentes_Director extends AppCompatActivity {
                 txtIdDocente.setText(listIdDocentes.get(i));
 
                 // Se mantiene el TextView de hora tal como está en el layout
-                TextView txtHora = docenteView.findViewById(R.id.txtHora);
+                txtHora = docenteView.findViewById(R.id.txtHora_docentes);
 
                 // Configurar el botón btnReloj para registrar asistencia
                 ImageButton btnReloj = docenteView.findViewById(R.id.btnReloj);
@@ -157,9 +158,9 @@ public class Docentes_Director extends AppCompatActivity {
                         // Verificar la asistencia consultando el servidor y luego mostrar el popup:
                         verificarAsistencias(new VerificacionCallback() {
                             @Override
-                            public void onVerificacion(boolean entradaRegistrada, boolean salidaRegistrada) {
+                            public void onVerificacion(boolean entradaRegistrada, boolean salirRegistrada) {
                                 llegadaRegistrada = entradaRegistrada;
-                                salidaRegistrada = salidaRegistrada;
+                                salidaRegistrada = salirRegistrada;
                                 mostrarPopupAsistencia();
                             }
                         });
@@ -255,7 +256,7 @@ public class Docentes_Director extends AppCompatActivity {
 
     private void mostrarPopupAsistencia() {
         if (!"DENTRO DE LA I.E.".equals(finalUbicacionEnvio)) {
-            Toast.makeText(this, "Estás lejos de la I.E: " + dataLatitud + " log: " + longitudActual, Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Ubicación errónea, vuelva a intentarlo", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -273,6 +274,7 @@ public class Docentes_Director extends AppCompatActivity {
 
         if (llegadaRegistrada && salidaRegistrada) {
             tvTitulo.setText("Registro completo por hoy");
+            txtHora.setText("Completo");
             etComentario.setEnabled(false);
             btnSi.setEnabled(false);
         } else {
@@ -280,6 +282,7 @@ public class Docentes_Director extends AppCompatActivity {
                 tvTitulo.setText("Registrar su hora de ingreso");
             } else if (llegadaRegistrada && !salidaRegistrada) {
                 tvTitulo.setText("Registrar su hora de salida");
+                txtHora.setText("Entrada");
             }
         }
 

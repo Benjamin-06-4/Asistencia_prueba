@@ -10,7 +10,7 @@
         android:id="@+id/lbl_especialista"
         android:layout_width="191dp"
         android:layout_height="38dp"
-        android:text="HOLA MUNDO!"
+        android:text="ESPECIALISTA UGEL"
         android:textAlignment="viewStart"
         android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -139,6 +139,6 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.482"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btc_horarios_director"
+        app:layout_constraintTop_toBottomOf="@+id/btc_evidencias_especialistas"
         app:layout_constraintVertical_bias="0.065" />
 </androidx.constraintlayout.widget.ConstraintLayout>
