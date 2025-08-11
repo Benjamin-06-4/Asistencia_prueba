@@ -1,21 +1,24 @@
 package appAsis.example.asistenciaugelcorongo;
 
+import android.app.AlertDialog;
+import android.app.TimePickerDialog;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
-import android.text.TextUtils;
-import android.util.Log;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.TimePicker;
 
-import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 
@@ -24,36 +27,31 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class Horarios_Docentes extends AppCompatActivity {
 
     // Datos recibidos por Intent
-    private String colegio;
-    private String idcolegio;
-    private String docente;
-    private String rol;  // Esperamos "Director" para esta actividad
-
-    // Elementos de la interfaz
-    // En este caso se usará el contenedor definido en el ScrollView
-    private LinearLayout container;   // Debe tener el id "layout_list"
-    private EditText txtSearch;       // Opcional, para búsqueda
-    private TextView txtCricketer;    // Por ejemplo, para mostrar información en la cabecera
-    private TextView txt_director;    // Otro TextView en la cabecera
-
-    // Listas para almacenar datos obtenidos de R.raw.datadocentes
+    private String colegio, idcolegio, docente, rol;
+    private LinearLayout container;
     private List<String> listColegios = new ArrayList<>();
     private List<String> listDocentes = new ArrayList<>();
     private List<String> listIdDocentes = new ArrayList<>();
+
+    // Para validar tiempos 00–23:00–59
+    private static final Pattern TIME24 =
+            Pattern.compile("^([01]\\d|2[0-3]):([0-5]\\d)$");
+
+    private ScheduleManager mgr;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,98 +59,75 @@ public class Horarios_Docentes extends AppCompatActivity {
         setContentView(R.layout.activity_horarios_docentes);
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
 
-        // Asignar los elementos de la cabecera y el contenedor
-        txtCricketer = findViewById(R.id.txtCricketer);
-        txt_director = findViewById(R.id.txt_director);
-        container = findViewById(R.id.layout_list); // Usamos el contenedor del ScrollView
+        container = findViewById(R.id.layout_list);
 
-        // Verificar que el contenedor se encuentre
-        if (container == null) {
-            Toast.makeText(this, "Contenedor no encontrado. Revisa el ID en el XML.", Toast.LENGTH_LONG).show();
-            finish();
-            return;
-        }
-
-        // Obtener datos enviados en el Intent y comprobar que no sean nulos
-        colegio = getIntent().getStringExtra("colegio");
+        colegio   = getIntent().getStringExtra("colegio");
         idcolegio = getIntent().getStringExtra("idcolegio");
-        docente = getIntent().getStringExtra("docente");
-        rol = getIntent().getStringExtra("rol");
+        docente   = getIntent().getStringExtra("docente");
+        rol       = getIntent().getStringExtra("rol");
 
         if (colegio == null || rol == null) {
-            Toast.makeText(this, "Falta información esencial en el Intent", Toast.LENGTH_LONG).show();
+            Toast.makeText(this,
+                    "Falta información esencial", Toast.LENGTH_LONG).show();
             finish();
             return;
         }
 
-        // Actualiza la cabecera (opcional)
-        txtCricketer.setText(colegio);
-        txt_director.setText(rol);
+        mgr = ScheduleManager.get(this);
 
-        // Cargar la información de los docentes
         leerDocentesDelArchivo();
         mostrarDocentes();
     }
 
-    /**
-     * Lee el archivo R.raw.datadocentes y guarda la información de docentes en las listas.
-     */
     private void leerDocentesDelArchivo() {
         try {
-            InputStream is = getResources().openRawResource(R.raw.datadocentes);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+            java.io.InputStream isStream = getResources()
+                    .openRawResource(R.raw.datadocentes);
+            java.io.BufferedReader reader   = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(isStream));
             String linea;
             while ((linea = reader.readLine()) != null) {
-                String[] parts = linea.split(";");
-                if (parts.length < 7) continue;
-                // Se asume que parts[0] es el nombre del colegio,
-                // parts[2-4] conforman el nombre completo,
-                // y parts[5] es el id del docente.
-                String docenteNombre = parts[2] + " " + parts[3] + " " + parts[4];
-                // Usar "parts[0].equals(colegio)" es más seguro si colegio puede ser nulo, pero ya lo comprobamos
-                if (colegio.equals(parts[0])) {
-                    listColegios.add(parts[0]);
-                    listDocentes.add(docenteNombre);
-                    listIdDocentes.add(parts[5]);
+                String[] p = linea.split(";");
+                if (p.length < 7) continue;
+                if (colegio.equals(p[0])) {
+                    String nombre = p[2]+" "+p[3]+" "+p[4];
+                    listColegios.add(p[0]);
+                    listDocentes.add(nombre);
+                    listIdDocentes.add(p[5]);
                 }
             }
-            is.close();
+            reader.close();
         } catch (Exception e) {
-            Log.e("Horarios_Docentes", "Error leyendo docentes: ", e);
+            e.printStackTrace();
         }
     }
 
-    /**
-     * Infla el layout para cada docente (row_add_docentes_horarios.xml) y configura el botón para asignar horarios.
-     */
     private void mostrarDocentes() {
         boolean noExiste = true;
-        for (int i = 0; i < listColegios.size(); i++) {
-            if (listColegios.get(i).equals(colegio) && rol.equals("Director")) {
-                noExiste = false;
-                View docenteView = getLayoutInflater().inflate(R.layout.row_add_docentes_horarios, container, false);
+        for (int i = 0; i < listDocentes.size(); i++) {
+            if (!"Director".equals(rol)) break;
+            noExiste = false;
 
-                // Asignar el nombre del docente y su identificador
-                EditText editName = docenteView.findViewById(R.id.edit_docente_name);
-                editName.setText(listDocentes.get(i));
+            View row = getLayoutInflater()
+                    .inflate(R.layout.row_add_docentes_horarios,
+                            container, false);
 
-                EditText txtIdDocente = docenteView.findViewById(R.id.txtiddocente);
-                txtIdDocente.setText(listIdDocentes.get(i));
+            EditText editName = row.findViewById(R.id.edit_docente_name);
+            EditText txtId    = row.findViewById(R.id.txtiddocente);
+            ImageButton btnH  = row.findViewById(R.id.btn_horario);
 
-                // Configurar el botón btn_horario
-                ImageButton btnHorario = docenteView.findViewById(R.id.btn_horario);
-                btnHorario.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        String currentDocente = editName.getText().toString();
-                        String idDocente = txtIdDocente.getText().toString();
-                        mostrarPopupHorario(currentDocente, idDocente);
-                    }
-                });
+            editName.setText(listDocentes.get(i));
+            txtId   .setText(listIdDocentes.get(i));
 
-                container.addView(docenteView);
-            }
+            btnH.setOnClickListener(v -> {
+                String nom = editName.getText().toString();
+                String id  = txtId.getText().toString();
+                showScheduleDialog(nom, id);
+            });
+
+            container.addView(row);
         }
+
         if (noExiste) {
             TextView tv = new TextView(this);
             tv.setText("No se encontraron docentes para este colegio.");
@@ -160,80 +135,160 @@ public class Horarios_Docentes extends AppCompatActivity {
         }
     }
 
-    /**
-     * Verifica si hay conexión a Internet.
-     */
-    private boolean isInternetAvailable() {
-        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (cm != null) {
-            NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
-            return activeNetwork != null && activeNetwork.isConnected();
-        }
-        return false;
+    /** Comprueba Internet */
+    private boolean isInternet() {
+        ConnectivityManager cm =
+                (ConnectivityManager)getSystemService(
+                        Context.CONNECTIVITY_SERVICE);
+        NetworkInfo ni = cm != null ? cm.getActiveNetworkInfo() : null;
+        return ni != null && ni.isConnected();
     }
 
-    /**
-     * Muestra el diálogo para asignar horario (ingreso y salida) para el docente.
-     */
-    private void mostrarPopupHorario(String docenteNombre, String idDocente) {
-        if (!isInternetAvailable()) {
-            Toast.makeText(this, "Sin conexión a Internet. Inténtalo más tarde.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        LayoutInflater inflater = LayoutInflater.from(Horarios_Docentes.this);
-        // Inflar el layout del diálogo (dialog_horario.xml)
-        View dialogView = inflater.inflate(R.layout.dialog_horario, null);
-        AlertDialog.Builder builder = new AlertDialog.Builder(Horarios_Docentes.this);
-        builder.setView(dialogView);
-        final AlertDialog dialog = builder.create();
+    /** Diálogo completo de asignación */
+    private void showScheduleDialog(String nom, String idDoc) {
+        LayoutInflater inf = LayoutInflater.from(this);
+        View v = inf.inflate(R.layout.dialog_horario, null);
+        AlertDialog dlg = new AlertDialog.Builder(this)
+                .setView(v).create();
 
-        // Asegurarse de que los elementos existan en dialog_horario.xml
-        TextView tvDocenteNombre = dialogView.findViewById(R.id.tv_docente_nombre);
-        if (tvDocenteNombre == null) {
-            Toast.makeText(this, "Error: Falta el TextView tv_docente_nombre en dialog_horario.xml", Toast.LENGTH_LONG).show();
-            return;
-        }
-        tvDocenteNombre.setText(docenteNombre);
+        TextView tvNom = v.findViewById(R.id.tv_docente_nombre);
+        tvNom.setText(nom);
 
-        EditText etHoraIngreso = dialogView.findViewById(R.id.et_horaIngreso);
-        EditText etHoraSalida = dialogView.findViewById(R.id.et_horaSalida);
+        EditText etIn = v.findViewById(R.id.et_horaIngreso);
+        EditText etOut= v.findViewById(R.id.et_horaSalida);
 
-        Button btnSi = dialogView.findViewById(R.id.btn_si);
-        Button btnNo = dialogView.findViewById(R.id.btn_no);
+        // CheckBoxes
+        CheckBox cbL = v.findViewById(R.id.cb_lun);
+        CheckBox cbM = v.findViewById(R.id.cb_mar);
+        CheckBox cbX = v.findViewById(R.id.cb_mie);
+        CheckBox cbJ = v.findViewById(R.id.cb_jue);
+        CheckBox cbV = v.findViewById(R.id.cb_vie);
+        List<CheckBox> dias = List.of(cbL,cbM,cbX,cbJ,cbV);
 
-        btnSi.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String horaIngreso = etHoraIngreso.getText().toString().trim();
-                String horaSalida = etHoraSalida.getText().toString().trim();
-                if (TextUtils.isEmpty(horaIngreso) || TextUtils.isEmpty(horaSalida)) {
-                    Toast.makeText(Horarios_Docentes.this, "Ingresa ambos horarios", Toast.LENGTH_SHORT).show();
-                    return;
+        // TimePicker listeners
+        etIn .setInputType(0);
+        etIn .setFocusable(false);
+        etIn .setOnClickListener( x -> pickTime(etIn) );
+        etOut.setInputType(0);
+        etOut.setFocusable(false);
+        etOut.setOnClickListener(x -> pickTime(etOut));
+
+        // Carga inicial (online→local)
+        new Thread(() -> {
+            if (isInternet()) {
+                try {
+                    mgr.loadRemote(
+                            "https://tu.server/datahorarios.txt"
+                    );
+                } catch (Exception ignored) {}
+            }
+            mgr.loadLocal();
+            new Handler(Looper.getMainLooper())
+                    .post(() -> preloadUI(nom, dias, etIn, etOut));
+        }).start();
+
+        Button btnSave   = v.findViewById(R.id.btn_save);
+        Button btnDelete = v.findViewById(R.id.btn_delete);
+        Button btnNo     = v.findViewById(R.id.btn_cancel);
+
+        btnSave.setOnClickListener(x -> {
+            String ing = etIn .getText().toString().trim();
+            String out = etOut.getText().toString().trim();
+
+            if (!TIME24.matcher(ing).matches() ||
+                    !TIME24.matcher(out).matches()) {
+                Toast.makeText(this,
+                        "Formato inválido. Usa HH:mm (00–23,00–59)",
+                        Toast.LENGTH_LONG).show();
+                return;
+            }
+            if (!isAfter(ing,out)) {
+                Toast.makeText(this,
+                        "Hora de salida debe ser posterior",
+                        Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            List<String> sel = new ArrayList<>();
+            for (CheckBox cb : dias)
+                if (cb.isChecked()) sel.add(cb.getText().toString());
+            if (sel.isEmpty()) {
+                Toast.makeText(this,
+                        "Selecciona al menos un día",
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            new Thread(() -> {
+                try {
+                    for (String d : sel) {
+                        mgr.upsert(
+                                new ScheduleManager.Schedule(
+                                        colegio, nom, d, ing, out
+                                )
+                        );
+                    }
+                    runOnUiThread(() -> {
+                        updateColoring(dias);
+                        for (String d : sel) {
+                            enviarHorario(nom, idDoc, d, ing, out);
+                        }
+                        //Toast.makeText(this,"Guardado", Toast.LENGTH_SHORT).show();
+                    });
+                } catch (Exception e) {
+                    runOnUiThread(() -> Toast.makeText(
+                            this, "Error: "+e.getMessage(),
+                            Toast.LENGTH_LONG).show());
                 }
-                enviarHorario(docenteNombre, idDocente, horaIngreso, horaSalida);
-                dialog.dismiss();
-            }
+            }).start();
+
+            dlg.dismiss();
         });
 
-        btnNo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                dialog.dismiss();
+        btnDelete.setOnClickListener(x -> {
+            List<String> sel = new ArrayList<>();
+            for (CheckBox cb : dias)
+                if (cb.isChecked()) sel.add(cb.getText().toString());
+            if (sel.isEmpty()) {
+                Toast.makeText(this,
+                        "Marca día(s) para eliminar",
+                        Toast.LENGTH_SHORT).show();
+                return;
             }
+            new Thread(() -> {
+                try {
+                    mgr.delete(colegio, nom, sel);
+                    runOnUiThread(() -> {
+                        for (CheckBox cb : dias)
+                            cb.setChecked(false);
+                        etIn .setText("");
+                        etOut.setText("");
+                        updateColoring(dias);
+                        Toast.makeText(this,
+                                "Eliminado", Toast.LENGTH_SHORT
+                        ).show();
+                    });
+                } catch (Exception e) {
+                    runOnUiThread(() -> Toast.makeText(
+                            this, "Error: "+e.getMessage(),
+                            Toast.LENGTH_LONG).show());
+                }
+            }).start();
         });
 
-        dialog.show();
+        btnNo.setOnClickListener(x -> dlg.dismiss());
+        dlg.show();
     }
 
     /**
      * Envía el horario asignado al servidor mediante POST.
      */
-    private void enviarHorario(String docenteNombre, String idDocente, String horaIngreso, String horaSalida) {
+    private void enviarHorario(String docenteNombre, String idDocente, String dia, String horaIngreso, String horaSalida) {
         String url = "https://ugelcorongo.pe/ugelasistencias_docente/model/auxasistencia/asignarHorario.php";
 
         StringRequest postRequest = new StringRequest(Request.Method.POST, url,
-                response -> Toast.makeText(Horarios_Docentes.this, "Horario asignado correctamente.", Toast.LENGTH_SHORT).show(),
-                error -> Toast.makeText(Horarios_Docentes.this, "Error al asignar horario.", Toast.LENGTH_SHORT).show()) {
+                response -> Toast.makeText(Horarios_Docentes.this, "Horario asignado correctamente", Toast.LENGTH_SHORT).show(),
+                error -> Toast.makeText(Horarios_Docentes.this, "Horario Guardado de manera Local", Toast.LENGTH_SHORT).show()) {
             @Override
             protected Map<String, String> getParams() {
                 Map<String, String> params = new HashMap<>();
@@ -241,6 +296,7 @@ public class Horarios_Docentes extends AppCompatActivity {
                 params.put("idcolegio", idcolegio);
                 params.put("docente", docenteNombre);
                 params.put("iddocente", idDocente);
+                params.put("dia", dia);
                 params.put("horaIngreso", horaIngreso);
                 params.put("horaSalida", horaSalida);
                 return params;
@@ -249,5 +305,61 @@ public class Horarios_Docentes extends AppCompatActivity {
 
         RequestQueue requestQueue = Volley.newRequestQueue(this);
         requestQueue.add(postRequest);
+    }
+
+    /** Pre-carga horas y estado de casillas */
+    private void preloadUI(String nom,
+                           List<CheckBox> dias,
+                           EditText etIn, EditText etOut) {
+
+        for (CheckBox cb : dias) {
+            String d = cb.getText().toString();
+            List<ScheduleManager.Schedule> lst =
+                    mgr.filter(colegio, nom, d);
+            if (!lst.isEmpty()) {
+                cb.setChecked(true);
+                etIn .setText(lst.get(0).ingreso);
+                etOut.setText(lst.get(0).salida);
+            } else {
+                cb.setChecked(false);
+            }
+        }
+        updateColoring(dias);
+    }
+
+    /** Forzar redraw para bg selector */
+    private void updateColoring(List<CheckBox> dias) {
+        for (CheckBox cb : dias)
+            cb.refreshDrawableState();
+    }
+
+    /** Muestra un TimePickerDialog */
+    private void pickTime(EditText target) {
+        Calendar c = Calendar.getInstance();
+        new TimePickerDialog(
+                this,
+                (TimePicker tp,int h,int m) -> {
+                    target.setText(
+                            String.format(Locale.getDefault(),
+                                    "%02d:%02d", h, m)
+                    );
+                },
+                c.get(Calendar.HOUR_OF_DAY),
+                c.get(Calendar.MINUTE),
+                true
+        ).show();
+    }
+
+    /** Comprueba salida > ingreso */
+    private boolean isAfter(String in, String out) {
+        try {
+            SimpleDateFormat df =
+                    new SimpleDateFormat("HH:mm",Locale.getDefault());
+            Date d1 = df.parse(in);
+            Date d2 = df.parse(out);
+            return d2.after(d1);
+        } catch (ParseException e) {
+            return false;
+        }
     }
 }

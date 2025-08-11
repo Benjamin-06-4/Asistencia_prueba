@@ -8,6 +8,11 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="blue">#2765DF</color>
+    <color name="green">#50C878</color>
+    <color name="gray">#A9A9A9</color>
+    <color name="red">#FF2C2C</color>
+    <color name="day_checkbox_text">#50C878</color>
+
 
     <color name="rgb_azulnoche">#190751</color>
     <color name="rgb_azul">#330ea6</color>

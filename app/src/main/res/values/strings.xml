@@ -52,4 +52,14 @@
         <item>Masculino</item>
         <item>Femenino</item>
     </string-array>
+    <style name="CircularDayCheckbox">
+        <item name="android:layout_width">48dp</item>
+        <item name="android:layout_height">48dp</item>
+        <item name="android:button">@null</item>
+        <item name="android:background">@drawable/bg_checkbox_circle</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">16sp</item>
+    </style>
 </resources>

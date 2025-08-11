@@ -1,68 +1,112 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<ScrollView
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="16dp">
-
-    <TextView
-        android:id="@+id/tv_docente"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Docente:"/>
-
-    <TextView
-        android:id="@+id/tv_docente_nombre"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Nombre del docente"
-        android:textStyle="bold"/>
-
-    <TextView
-        android:id="@+id/tv_horaIngreso"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Establece hora ingreso:"/>
-
-    <EditText
-        android:id="@+id/et_horaIngreso"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="hh:mm"
-        android:inputType="time"/>
-
-    <TextView
-        android:id="@+id/tv_horaSalida"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Establece hora salida:"/>
-
-    <EditText
-        android:id="@+id/et_horaSalida"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="hh:mm"
-        android:inputType="time"/>
+    android:layout_height="wrap_content">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="end"
-        android:layout_marginTop="20dp">
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <Button
-            android:id="@+id/btn_si"
+        <TextView
+            android:id="@+id/tv_docente"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Sí"/>
+            android:text="Docente:"/>
 
-        <Button
-            android:id="@+id/btn_no"
+        <TextView
+            android:id="@+id/tv_docente_nombre"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="No"
-            android:layout_marginStart="16dp"/>
+            android:text="Nombre del docente"
+            android:textStyle="bold"/>
+
+        <!-- Fila de casillas circulares para días -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginTop="12dp">
+
+            <CheckBox
+                android:id="@+id/cb_lun"
+                style="@style/CircularDayCheckbox"
+                android:text="L"/>
+            <CheckBox
+                android:id="@+id/cb_mar"
+                style="@style/CircularDayCheckbox"
+                android:text="M"/>
+            <CheckBox
+                android:id="@+id/cb_mie"
+                style="@style/CircularDayCheckbox"
+                android:text="W"/>
+            <CheckBox
+                android:id="@+id/cb_jue"
+                style="@style/CircularDayCheckbox"
+                android:text="J"/>
+            <CheckBox
+                android:id="@+id/cb_vie"
+                style="@style/CircularDayCheckbox"
+                android:text="V"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_horaIngreso"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hora ingreso:"/>
+
+        <EditText
+            android:id="@+id/et_horaIngreso"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="hh:mm"
+            android:inputType="time"/>
+
+        <TextView
+            android:id="@+id/tv_horaSalida"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Hora salida:"/>
+
+        <EditText
+            android:id="@+id/et_horaSalida"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="hh:mm"
+            android:inputType="time"/>
+
+        <!-- Botones Guardar / Eliminar / Cancelar -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end"
+            android:layout_marginTop="20dp">
+
+            <Button
+                android:id="@+id/btn_delete"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Eliminar"
+                android:backgroundTint="@color/red"/>
+
+            <Button
+                android:id="@+id/btn_cancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="No"
+                android:layout_marginStart="8dp"/>
+
+            <Button
+                android:id="@+id/btn_save"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sí"
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
     </LinearLayout>
-</LinearLayout>
+</ScrollView>

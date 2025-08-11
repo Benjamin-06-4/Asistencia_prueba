@@ -3,7 +3,10 @@ package appAsis.example.asistenciaugelcorongo;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
@@ -34,6 +37,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -68,6 +72,8 @@ public class Docentes_Director extends AppCompatActivity {
     private List<String> listDocentes = new ArrayList<>();
     private List<String> listIdDocentes = new ArrayList<>();
 
+    private ScheduleManager mgr;
+
     @SuppressLint("MissingInflatedId")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,6 +100,8 @@ public class Docentes_Director extends AppCompatActivity {
         } else {
             txtCricketer.setText("Colegio no definido");
         }
+
+        mgr = ScheduleManager.get(this);
 
         // Leer el archivo de docentes y guardar los datos en las listas
         leerDocentesDelArchivo();
@@ -161,7 +169,7 @@ public class Docentes_Director extends AppCompatActivity {
                             public void onVerificacion(boolean entradaRegistrada, boolean salirRegistrada) {
                                 llegadaRegistrada = entradaRegistrada;
                                 salidaRegistrada = salirRegistrada;
-                                mostrarPopupAsistencia();
+                                mostrarPopupAsistencia(txtHora);
                             }
                         });
                     }
@@ -254,9 +262,32 @@ public class Docentes_Director extends AppCompatActivity {
         return metros_mostrar;
     }
 
-    private void mostrarPopupAsistencia() {
+    private void mostrarPopupAsistencia(TextView horaRow) {
         if (!"DENTRO DE LA I.E.".equals(finalUbicacionEnvio)) {
             Toast.makeText(this, "Ubicación errónea, vuelva a intentarlo", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (isInternet()) {
+            try {
+                String url = "https://ugelcorongo.pe/ugelasistencias_docente/"
+                        + "model/auxasistencia/verHorarios.php"
+                        + "?colegio=" + colegio
+                        + "&docente=" + str_docente;
+                mgr.loadRemote(url);
+            } catch (Exception ignored) {}
+        }
+        mgr.loadLocal();
+
+        String[] dias = {"D","L","M","X","J","V","S"};
+        int dow = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
+        String diaHoy = dias[dow - 1];
+
+        List<ScheduleManager.Schedule> turnos = mgr.filter(colegio, str_docente, diaHoy);
+        if (turnos.isEmpty()) {
+            Toast.makeText(this,
+                    "No hay horarios configurados para hoy.",
+                    Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -274,7 +305,7 @@ public class Docentes_Director extends AppCompatActivity {
 
         if (llegadaRegistrada && salidaRegistrada) {
             tvTitulo.setText("Registro completo por hoy");
-            txtHora.setText("Completo");
+            horaRow.setText("Completo");
             etComentario.setEnabled(false);
             btnSi.setEnabled(false);
         } else {
@@ -282,7 +313,7 @@ public class Docentes_Director extends AppCompatActivity {
                 tvTitulo.setText("Registrar su hora de ingreso");
             } else if (llegadaRegistrada && !salidaRegistrada) {
                 tvTitulo.setText("Registrar su hora de salida");
-                txtHora.setText("Entrada");
+                horaRow.setText("Asistencia Marcada");
             }
         }
 
@@ -381,9 +412,6 @@ public class Docentes_Director extends AppCompatActivity {
         requestQueue.add(postRequest);
     }
 
-    // --------------------------------------------------------------------------
-    // METODO: verificarAsistencias (igual que el de btc_asistencia)
-    // --------------------------------------------------------------------------
     private void verificarAsistencias(final VerificacionCallback callback) {
         final int[] count = {0};
         final boolean[] entradaExiste = {false};
@@ -444,9 +472,15 @@ public class Docentes_Director extends AppCompatActivity {
     }
 
     // --------------------------------------------------------------------------
-    // INTERFAZ DE CALLBACK (la misma que usas en btc_asistencia)
+    // INTERFAZ DE CALLBACK
     // --------------------------------------------------------------------------
     public interface VerificacionCallback {
         void onVerificacion(boolean entradaRegistrada, boolean salidaRegistrada);
+    }
+
+    private boolean isInternet() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo ni = cm != null ? cm.getActiveNetworkInfo() : null;
+        return ni != null && ni.isConnected();
     }
 }

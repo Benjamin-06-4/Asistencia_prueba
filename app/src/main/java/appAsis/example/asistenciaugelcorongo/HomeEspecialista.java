@@ -371,15 +371,15 @@ public class HomeEspecialista extends BaseActivity {
      */
     private void loadRefCoordinates() {
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(openFileInput("datacolegiofichas.txt")));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(openFileInput("datacolegio.txt")));
             String line;
             double minDistance = Double.MAX_VALUE;
             boolean found = false;
             while ((line = reader.readLine()) != null) {
                 String[] partes = line.split(";");
                 if (partes.length >= 4) { // Se aseguran los campos: [2]=latitud, [3]=longitud
-                    double lat = Double.parseDouble(partes[2].trim());
-                    double lon = Double.parseDouble(partes[3].trim());
+                    double lat = Double.parseDouble(partes[5].trim());
+                    double lon = Double.parseDouble(partes[6].trim());
                     double distance = calcularDistancia(GlobalData.latActual, GlobalData.lonActual, lat, lon);
                     // Si la distancia es ≤ 50 m y es la más cercana encontrada hasta ahora
                     if (distance <= 50 && distance < minDistance) {
@@ -435,6 +435,11 @@ public class HomeEspecialista extends BaseActivity {
         } else if (!salidaRegistrada) {
             tipoRegistro = "Salida";
         }
+
+        Toast.makeText(HomeEspecialista.this,
+                "C: " + institucionEncontrada,
+                Toast.LENGTH_LONG).show();
+        dialog.dismiss();
 
         if (tipoRegistro.equals("Entrada")) {
             tvTitulo.setText("Registrar su hora de ingreso");
