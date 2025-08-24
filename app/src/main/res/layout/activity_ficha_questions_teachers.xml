@@ -1,0 +1,490 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Sección I: Datos Generales -->
+        <TextView
+            android:id="@+id/tvDatosGenerales"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="I. Datos Generales"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:paddingBottom="8dp" />
+
+        <!-- Institución Educativa -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Institución Educativa:" />
+            <EditText
+                android:id="@+id/etInstitucionEducativa"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint="I.E. Prueba" />
+        </LinearLayout>
+
+        <!-- Código Modular -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Código Modular:" />
+            <EditText
+                android:id="@+id/etCodigoModular"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint="COD 00000" />
+        </LinearLayout>
+
+        <!-- Nivel Educativo -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nivel Educativo:" />
+            <EditText
+                android:id="@+id/etNivelEducativo"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint="PRUEBA SECUNDARIA" />
+        </LinearLayout>
+
+        <!-- Fecha de Monitoreo -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="8dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Fecha de Monitoreo:" />
+            <EditText
+                android:id="@+id/etFechaMonitoreo"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint="{Actual}"
+                android:enabled="false" />
+        </LinearLayout>
+
+        <!-- Responsable del Monitoreo -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="16dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Responsable:" />
+            <EditText
+                android:id="@+id/etResponsable"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint="Se saca del usuario"
+                android:enabled="false" />
+        </LinearLayout>
+
+        <!-- Datos del docente -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingBottom="16dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Docente:" />
+            <EditText
+                android:id="@+id/etDocente"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint=""
+                android:enabled="false" />
+        </LinearLayout>
+
+        <!-- Sección II: Planificación y Gestión -->
+        <TextView
+            android:id="@+id/tvPlanificacion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Rúbrica 1: INVOLUCRA ACTIVAMENTE A LOS ESTUDIANTES EN EL PROCESO DE APRENDIZAJE"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:paddingBottom="8dp" />
+
+        <!-- Pregunta 1 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="El docente involucra activamente a todos o casi todos los estudiantes en las actividades propuestas. Además, promueve que comprendan el sentido de lo que aprenden."
+            android:paddingBottom="4dp" />
+        <RadioGroup
+            android:id="@+id/rgEquipoResponsable"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="8dp">
+            <RadioButton
+                android:id="@+id/rbEquipoSi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DEST." />
+            <RadioButton
+                android:id="@+id/rbEquipoNo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SATIS." />
+            <RadioButton
+                android:id="@+id/rbEquipoNo2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PROCESO." />
+            <RadioButton
+                android:id="@+id/rbEquipoNo3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="INSATIS." />
+        </RadioGroup>
+        <Button
+            android:id="@+id/btnFotoEquipo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enviar foto" />
+
+        <!-- Pregunta 2 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="El docente involucra a la gran mayoría de los estudiantes en las actividades propuestas."
+            android:paddingTop="12dp"
+            android:paddingBottom="4dp" />
+        <RadioGroup
+            android:id="@+id/rgPlanRefuerzo12"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="8dp">
+            <RadioButton
+                android:id="@+id/rbPlanRefuerzoSi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DEST." />
+            <RadioButton
+                android:id="@+id/rbPlanRefuerzoNo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SATIS." />
+            <RadioButton
+                android:id="@+id/rbPlanRefuerzoNo2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PROCESO." />
+            <RadioButton
+                android:id="@+id/rbPlanRefuerzoNo3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="INSATIS." />
+        </RadioGroup>
+        <Button
+            android:id="@+id/btnFotoPlanRefuerzo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enviar foto" />
+
+        <!-- Pregunta 3 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="El docente involucra al menos a la mitad de los estudiantes en las actividades propuestas."
+            android:paddingTop="12dp"
+            android:paddingBottom="4dp" />
+        <RadioGroup
+            android:id="@+id/rgDiagnostico"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="8dp">
+            <RadioButton
+                android:id="@+id/rbDiagnosticoSi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DEST." />
+            <RadioButton
+                android:id="@+id/rbDiagnosticoNo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SATIS." />
+            <RadioButton
+                android:id="@+id/rbDiagnosticoNo2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PROCESO." />
+            <RadioButton
+                android:id="@+id/rbDiagnosticoNo3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="INSATIS." />
+        </RadioGroup>
+        <Button
+            android:id="@+id/btnFotoDiagnostico"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enviar foto" />
+
+        <!-- Pregunta 4 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No alcanza las condiciones del nivel II. El docente no ofrece oportunidades de participación. O más de la mitad de estudiantes está distraído, muestra indiferencia, desgano o signos de aburrimiento."
+            android:paddingTop="12dp"
+            android:paddingBottom="4dp" />
+        <RadioGroup
+            android:id="@+id/rgReuniones"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="8dp">
+            <RadioButton
+                android:id="@+id/rbReunionesSi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DEST." />
+            <RadioButton
+                android:id="@+id/rbReunionesNo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SATIS." />
+            <RadioButton
+                android:id="@+id/rbReunionesNo2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PROCESO." />
+            <RadioButton
+                android:id="@+id/rbReunionesNo3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="INSATIS." />
+        </RadioGroup>
+        <Button
+            android:id="@+id/btnFotoReuniones"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enviar foto" />
+
+        <!-- RUBRICA 2 -->
+
+        <TextView
+            android:id="@+id/tvPlanificacion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Rúbrica 2: PROMUEVE EL RAZONAMIENTO, LA CREATIVIDAD Y/O EL PENSAMIENTO CRÍTICO"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:paddingBottom="8dp" />
+
+        <!-- Pregunta 1 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="El  docente  monitorea  activamente  a  los  estudiantes  y  les  brinda,  al  menos  en  una  ocasión,  retroalimentación  por descubrimiento o reflexión (guía el análisis para encontrar por ellos mismos la solución y/o respuesta para mejorar)."
+            android:paddingBottom="4dp" />
+        <RadioGroup
+            android:id="@+id/rgEquipoResponsable22"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="8dp">
+            <RadioButton
+                android:id="@+id/rbEquipoSi32"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DEST." />
+            <RadioButton
+                android:id="@+id/rbEquipoNo42"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SATIS." />
+            <RadioButton
+                android:id="@+id/rbEquipoNo52"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PROCESO." />
+            <RadioButton
+                android:id="@+id/rbEquipoNo62"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="INSATIS." />
+        </RadioGroup>
+        <Button
+            android:id="@+id/btnFotoEquipo6"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enviar foto" />
+
+        <!-- Pregunta 2 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="El docente involucra a la gran mayoría de los estudiantes en las actividades propuestas."
+            android:paddingTop="12dp"
+            android:paddingBottom="4dp" />
+        <RadioGroup
+            android:id="@+id/rgPlanRefuerzo22"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="8dp">
+            <RadioButton
+                android:id="@+id/rbPlanRefuerzoSi32"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DEST." />
+            <RadioButton
+                android:id="@+id/rbPlanRefuerzoNo42"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SATIS." />
+            <RadioButton
+                android:id="@+id/rbPlanRefuerzoNo52"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PROCESO." />
+            <RadioButton
+                android:id="@+id/rbPlanRefuerzoNo62"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="INSATIS." />
+        </RadioGroup>
+        <Button
+            android:id="@+id/btnFotoPlanRefuerzo72"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enviar foto" />
+
+        <!-- Pregunta 3 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="El docente involucra al menos a la mitad de los estudiantes en las actividades propuestas."
+            android:paddingTop="12dp"
+            android:paddingBottom="4dp" />
+        <RadioGroup
+            android:id="@+id/rgDiagnostico31"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="8dp">
+            <RadioButton
+                android:id="@+id/rbDiagnosticoSi32"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DEST." />
+            <RadioButton
+                android:id="@+id/rbDiagnosticoNo33"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SATIS." />
+            <RadioButton
+                android:id="@+id/rbDiagnosticoNo234"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PROCESO." />
+            <RadioButton
+                android:id="@+id/rbDiagnosticoNo335"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="INSATIS." />
+        </RadioGroup>
+        <Button
+            android:id="@+id/btnFotoDiagnostico36"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enviar foto" />
+
+        <!-- Pregunta 4 -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No alcanza las condiciones del nivel II. El docente no ofrece oportunidades de participación. O más de la mitad de estudiantes está distraído, muestra indiferencia, desgano o signos de aburrimiento."
+            android:paddingTop="12dp"
+            android:paddingBottom="4dp" />
+        <RadioGroup
+            android:id="@+id/rgReuniones41"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingBottom="8dp">
+            <RadioButton
+                android:id="@+id/rbReunionesSi42"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DEST." />
+            <RadioButton
+                android:id="@+id/rbReunionesNo43"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="SATIS." />
+            <RadioButton
+                android:id="@+id/rbReunionesNo244"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="PROCESO." />
+            <RadioButton
+                android:id="@+id/rbReunionesNo345"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="INSATIS." />
+        </RadioGroup>
+        <Button
+            android:id="@+id/btnFotoReuniones46"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Enviar foto" />
+
+        <!-- Botón Enviar Ficha -->
+        <Button
+            android:id="@+id/btnEnviarFicha"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="#BAAD30"
+            android:foregroundTint="#902020"
+            android:onClick="enviarFicha"
+            android:text="Enviar Ficha"
+            android:backgroundTint="@android:color/holo_red_light"/>
+    </LinearLayout>
+</ScrollView>

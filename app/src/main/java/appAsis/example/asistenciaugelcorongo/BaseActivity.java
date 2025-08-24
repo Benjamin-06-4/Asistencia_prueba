@@ -1,8 +1,11 @@
 package appAsis.example.asistenciaugelcorongo;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.view.Menu;
 import android.view.MenuItem;
 
@@ -10,6 +13,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
@@ -19,6 +26,9 @@ import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 //
 public class BaseActivity extends AppCompatActivity {
@@ -223,35 +233,133 @@ public class BaseActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Solicita actualizaciones de ubicación mediante FusedLocationProviderClient.
-     */
-    protected void getCoordenada(){
+    public void getCoordenada() {
         LocationRequest locationRequest = LocationRequest.create();
         locationRequest.setInterval(10000);
         locationRequest.setFastestInterval(3000);
         locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
 
-        if(ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION)
-                != android.content.pm.PackageManager.PERMISSION_GRANTED)
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED)
             return;
 
         LocationServices.getFusedLocationProviderClient(this)
-                .requestLocationUpdates(locationRequest, new LocationCallback(){
+                .requestLocationUpdates(locationRequest, new LocationCallback() {
                     @Override
-                    public void onLocationResult(LocationResult locationResult){
+                    public void onLocationResult(LocationResult locationResult) {
                         super.onLocationResult(locationResult);
                         LocationServices.getFusedLocationProviderClient(BaseActivity.this)
                                 .removeLocationUpdates(this);
-                        if(locationResult != null && !locationResult.getLocations().isEmpty()){
+                        if (locationResult != null && !locationResult.getLocations().isEmpty()) {
                             int latestIndex = locationResult.getLocations().size() - 1;
-                            double lat = locationResult.getLocations().get(latestIndex).getLatitude();
-                            double lon = locationResult.getLocations().get(latestIndex).getLongitude();
-                            // Se asignan los valores a GlobalData
-                            GlobalData.latActual = lat;
-                            GlobalData.lonActual = lon;
+                            GlobalData.latActual = locationResult.getLocations().get(latestIndex).getLatitude();
+                            GlobalData.lonActual = locationResult.getLocations().get(latestIndex).getLongitude();
+
+                            double metros = calcularDistancia(GlobalData.latActual, GlobalData.lonActual,
+                                    GlobalData.dataLat, GlobalData.dataLon);
+                            if (metros <= 150) {
+                                GlobalData.finalUbicacionEnvio = "DENTRO DE LA I.E.";
+                            } else {
+                                GlobalData.finalUbicacionEnvio = "FUERA DE LA I.E.";
+                            }
                         }
                     }
-                }, android.os.Looper.myLooper());
+                }, Looper.myLooper());
+    }
+
+    public double calcularDistancia(double lat1, double lon1, double lat2, double lon2) {
+        double metros_mostrar = 0.0;
+        double radioTierra = 6371.0; // en kilómetros
+        double dLat = Math.toRadians(lat2 - lat1);
+        double dLon = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        metros_mostrar = radioTierra * c * 1000;
+        return metros_mostrar;
+    }
+
+    // METODO NUEVO PARA LA V5
+    protected void actualizarCoordenadasIE() {
+        try {
+            InputStream isUbicacion = getResources().openRawResource(R.raw.datacolegio);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(isUbicacion));
+            String linea;
+            while ((linea = reader.readLine()) != null) {
+                String[] partes = linea.split(";");
+                // Se asume que partes[0] es el nombre del colegio
+                if (colegio != null && colegio.equalsIgnoreCase(partes[0].trim())) {
+                    GlobalData.dataLat = Double.parseDouble(partes[5].trim());
+                    GlobalData.dataLon = Double.parseDouble(partes[6].trim());
+                }
+            }
+            isUbicacion.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    protected void verificarAsistencias(final VerificacionCallback callback) {
+        final int[] count = {0};
+        final boolean[] entradaExiste = {false};
+        final boolean[] salidaExiste = {false};
+        String fecha = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+
+        String urlEntrada = "https://ugelcorongo.pe/ugelasistencias_docente/model/auxasistencia/verAsistenciaDocentesDirector.php" +
+                "?colegio=" + colegio +
+                "&periodo=" + fecha +
+                "&docente=" + docente +
+                "&turno=ENTRADA";
+
+        String urlSalida = "https://ugelcorongo.pe/ugelasistencias_docente/model/auxasistencia/verAsistenciaDocentesDirector.php" +
+                "?colegio=" + colegio +
+                "&periodo=" + fecha +
+                "&docente=" + docente +
+                "&turno=SALIDA";
+
+        StringRequest requestEntrada = new StringRequest(Request.Method.GET, urlEntrada,
+                response -> {
+                    if (response != null && !response.equals("[]")) {
+                        entradaExiste[0] = true;
+                    }
+                    count[0]++;
+                    if (count[0] == 2) {
+                        callback.onVerificacion(entradaExiste[0], salidaExiste[0]);
+                    }
+                },
+                error -> {
+                    count[0]++;
+                    if (count[0] == 2) {
+                        callback.onVerificacion(entradaExiste[0], salidaExiste[0]);
+                    }
+                }
+        );
+
+        StringRequest requestSalida = new StringRequest(Request.Method.GET, urlSalida,
+                response -> {
+                    if (response != null && !response.equals("[]")) {
+                        salidaExiste[0] = true;
+                    }
+                    count[0]++;
+                    if (count[0] == 2) {
+                        callback.onVerificacion(entradaExiste[0], salidaExiste[0]);
+                    }
+                },
+                error -> {
+                    count[0]++;
+                    if (count[0] == 2) {
+                        callback.onVerificacion(entradaExiste[0], salidaExiste[0]);
+                    }
+                }
+        );
+
+        RequestQueue queue = Volley.newRequestQueue(this);
+        queue.add(requestEntrada);
+        queue.add(requestSalida);
+    }
+
+    public interface VerificacionCallback {
+        void onVerificacion(boolean entradaRegistrada, boolean salidaRegistrada);
     }
 }

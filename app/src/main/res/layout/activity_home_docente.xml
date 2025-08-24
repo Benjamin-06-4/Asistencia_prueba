@@ -35,6 +35,7 @@
         app:layout_constraintTop_toBottomOf="@id/tv_title"
         app:layout_constraintVertical_bias="0.0"
         app:srcCompat="@drawable/icon_asistencia"
+        android:visibility="gone"
         android:scaleType="centerInside"/>
 
     <!-- Botón de Sesión -->
@@ -79,7 +80,9 @@
         app:layout_constraintHorizontal_bias="0.187"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/btc_asistencia"
-        app:layout_constraintVertical_bias="0.03" />
+        app:layout_constraintVertical_bias="0.03"
+
+        android:visibility="gone"/>
 
     <TextView
         android:id="@+id/textView10"

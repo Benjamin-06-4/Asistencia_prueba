@@ -106,30 +106,22 @@ public class HomeEspecialista extends BaseActivity {
         rol = getIntent().getStringExtra("turnos"); // "Docente" o "Director"
 
         // Configuración del botón de asistencia
+
         btc_asistencia.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
-                // 1) Actualizar las coordenadas de la ficha base y obtener las actuales
-                actualizarCoordenadasIEBase();
-                loadRefCoordinates();
-                obtenerCoordenadasActual();
-
-                // Calcular la distancia desde la posición actual hacia la institución educativa encontrada
-                double currentLat = GlobalData.latActual;
-                double currentLon = GlobalData.lonActual;
-                double distance = calcularDistancia(currentLat, currentLon, refLatitud, refLongitud);
-
-                // Para el especialista la regla es que la distancia debe ser ≤ 50 metros
-                if (distance > 50) {
-                    Toast.makeText(HomeEspecialista.this,
-                            "Estás lejos de la I.E. (" + institucionEncontrada + "): " + distance + " metros",
-                            Toast.LENGTH_LONG).show();
-                    return;
-                }
-
-                // Mostrar popup para registrar la asistencia si se cumple la condición
-                mostrarPopupAsistencia();
+                // Realiza las tres acciones en serie:
+                actualizarCoordenadasIE();    // Actualizar coordenadas de la I.E.
+                obtenerCoordenadasActual();   // Obtener la ubicación actual
+                // Verificar la asistencia consultando el servidor y luego mostrar el popup:
+                verificarAsistencias(new VerificacionCallback() {
+                    @Override
+                    public void onVerificacion(boolean entradaRegistrada, boolean salirRegistrada) {
+                        llegadaRegistrada = entradaRegistrada;
+                        salidaRegistrada = salirRegistrada;
+                        mostrarPopupAsistencia();
+                    }
+                });
             }
         });
 
@@ -435,11 +427,6 @@ public class HomeEspecialista extends BaseActivity {
         } else if (!salidaRegistrada) {
             tipoRegistro = "Salida";
         }
-
-        Toast.makeText(HomeEspecialista.this,
-                "C: " + institucionEncontrada,
-                Toast.LENGTH_LONG).show();
-        dialog.dismiss();
 
         if (tipoRegistro.equals("Entrada")) {
             tvTitulo.setText("Registrar su hora de ingreso");

@@ -111,33 +111,6 @@
             android:inputType="number"
             android:layout_marginBottom="8dp" />
 
-        <EditText
-            android:id="@+id/etCodigoPlaza"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Código de Plaza"
-            android:layout_marginBottom="8dp" />
-
-        <!-- EditText para Fecha Inicio Contrato (solo lectura, invoca DatePickerDialog) -->
-        <EditText
-            android:id="@+id/etFechaInicio"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Fecha Inicio Contrato"
-            android:layout_marginBottom="8dp"
-            android:focusable="false"
-            android:clickable="true" />
-
-        <!-- EditText para Fecha Final Contrato (solo lectura, invoca DatePickerDialog) -->
-        <EditText
-            android:id="@+id/etFechaFinal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Fecha Final Contrato"
-            android:layout_marginBottom="8dp"
-            android:focusable="false"
-            android:clickable="true" />
-
         <!-- Spinner para Sexo -->
         <TextView
             android:id="@+id/lbl_sexo"

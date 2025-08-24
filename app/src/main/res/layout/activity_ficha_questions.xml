@@ -36,7 +36,7 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:hint="Ingrese la institución" />
+                android:hint="I.E. Prueba" />
         </LinearLayout>
 
         <!-- Código Modular -->
@@ -55,7 +55,7 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:hint="Ingrese el código modular" />
+                android:hint="COD 00000" />
         </LinearLayout>
 
         <!-- Nivel Educativo -->
@@ -74,7 +74,7 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:hint="Ingrese el nivel educativo" />
+                android:hint="PRUEBA SECUNDARIA" />
         </LinearLayout>
 
         <!-- Fecha de Monitoreo -->
@@ -93,7 +93,7 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:hint="Fecha automática"
+                android:hint="{Actual}"
                 android:enabled="false" />
         </LinearLayout>
 

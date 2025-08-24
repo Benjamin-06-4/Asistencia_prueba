@@ -8,11 +8,15 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.android.volley.toolbox.Volley;
+
 import java.util.List;
+import java.util.Objects;
 
 public class FichasAdapter extends ArrayAdapter<String> {
     private Context context;
@@ -21,6 +25,7 @@ public class FichasAdapter extends ArrayAdapter<String> {
     private String idcolegio;
     private String docente;
     private String rol;
+    private String visita;
 
     public FichasAdapter(@NonNull Context context, @NonNull List<String> fichas, String colegio, String idcolegio, String docente, String rol) {
         super(context, 0, fichas);
@@ -53,11 +58,16 @@ public class FichasAdapter extends ArrayAdapter<String> {
             // Puedes iniciar la actividad donde se muestren las preguntas
             // para la ficha seleccionada (ej.: FichaQuestionsActivity)
             Intent intent = new Intent(context, FichaQuestionsActivity.class);
+            if (Objects.equals(fichaTitle, "MONITOREO Y ACOMPAÑAMIENTO AL DESEMPEÑO DOCENTE – MADD 5C 2024")){
+                intent = new Intent(context, FichaQuestionsTeachers.class);
+            }
             intent.putExtra("fichaTitle", fichaTitle);
             intent.putExtra("colegio", colegio);
             intent.putExtra("idcolegio", idcolegio);
             intent.putExtra("docente", docente);
             intent.putExtra("rol", rol);
+            intent.putExtra("visita", visita);
+
             context.startActivity(intent);
         });
 

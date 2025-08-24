@@ -31,7 +31,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
-public class FichaQuestionsActivity extends AppCompatActivity {
+public class FichaQuestionsTeachers extends AppCompatActivity {
 
     // Código de solicitud para la cámara
     private static final int REQUEST_IMAGE_EVIDENCIA = 101;
@@ -61,7 +61,7 @@ public class FichaQuestionsActivity extends AppCompatActivity {
         // Forzar modo claro (opcional)
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_ficha_questions);
+        setContentView(R.layout.activity_ficha_questions_teachers);
 
         // Enlazar los campos de "Datos generales"
         etInstitucionEducativa = findViewById(R.id.etInstitucionEducativa);
@@ -213,14 +213,14 @@ public class FichaQuestionsActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(NetworkResponse response) {
                         String responseData = new String(response.data);
-                        Toast.makeText(FichaQuestionsActivity.this, "Envío exitoso: " + responseData, Toast.LENGTH_LONG).show();
+                        Toast.makeText(FichaQuestionsTeachers.this, "Envío exitoso: " + responseData, Toast.LENGTH_LONG).show();
                         Log.d("VOLLEY_SUCCESS", "Respuesta: " + responseData);
                     }
                 },
                 new Response.ErrorListener() {
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(FichaQuestionsActivity.this, "Error: " + error.getMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(FichaQuestionsTeachers.this, "Error: " + error.getMessage(), Toast.LENGTH_LONG).show();
                         Log.e("VOLLEY_ERROR", "Error: " + error.toString());
                     }
                 }

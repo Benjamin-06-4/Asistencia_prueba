@@ -59,9 +59,9 @@ public class RegistroDocente extends AppCompatActivity {
         etApellidoMaterno = findViewById(R.id.etApellidoMaterno);
         etNombre = findViewById(R.id.etNombre);
         etJornada = findViewById(R.id.etJornada);
-        etCodigoPlaza = findViewById(R.id.etCodigoPlaza);
-        etFechaInicio = findViewById(R.id.etFechaInicio);
-        etFechaFinal = findViewById(R.id.etFechaFinal);
+        etCodigoPlaza = findViewById(R.id.etDni);
+        etFechaInicio = findViewById(R.id.etNombre);
+        etFechaFinal = findViewById(R.id.etNombre);
         spNivelEducativo = findViewById(R.id.spNivelEducativo);
         spCargoLaboral = findViewById(R.id.spCargoLaboral);
         spSituacionLaboral = findViewById(R.id.spSituacionLaboral);
