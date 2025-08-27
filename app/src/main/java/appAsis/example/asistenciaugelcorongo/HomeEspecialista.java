@@ -1,10 +1,13 @@
 package appAsis.example.asistenciaugelcorongo;
 
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.MediaStore;
@@ -18,7 +21,16 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.work.Constraints;
+import androidx.work.NetworkType;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
@@ -49,636 +61,430 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
-// Importa otras librerías necesarias (Volley, etc.)
-public class HomeEspecialista extends BaseActivity {
+import appAsis.example.asistenciaugelcorongo.domain.models.AttendancePrefs;
+import appAsis.example.asistenciaugelcorongo.domain.models.AttendanceRecord;
+import appAsis.example.asistenciaugelcorongo.remote.ApiService;
+import appAsis.example.asistenciaugelcorongo.repository.DataRepository;
+import appAsis.example.asistenciaugelcorongo.utils.LocationHelper;
+import appAsis.example.asistenciaugelcorongo.utils.NetworkHelper;
+import appAsis.example.asistenciaugelcorongo.utils.RawFileReader;
+import appAsis.example.asistenciaugelcorongo.utils.URLPostHelper;
+import appAsis.example.asistenciaugelcorongo.work.SyncAttendanceWorker;
+import appAsis.example.asistenciaugelcorongo.remote.ApiService.ApiCallback;
 
-    // Botones de la interfaz
-    private ImageButton btc_asistencia;
-    private ImageButton btc_evidencia;
-
-    // Variables para determinar el registro de asistencia (Entrada/Salida)
-    private boolean llegadaRegistrada = false;
-    private boolean salidaRegistrada = false;
-    private String idcolegio; // ID de la I.E.
-    private String colegio;   // Ejemplo: "UNIDAD DE GESTION EDUCATIVA LOCAL CORONGO"
-    private String docente;   // Ejemplo: "ITURRIA HUAMAN ROBERT ALBERTO"
-    private String rol;       // "Docente" o "Director"
-    private String horaLlegada = "";
-    private String horaSalida = "";
-
-    // Variables para la institución educativa de referencia, a partir de datacolegiofichas.txt
-    // Se almacenará la latitud y longitud de la institución que se encuentre dentro del rango (≤ 50 m)
-    private double refLatitud = 0.0;
-    private double refLongitud = 0.0;
-    // Opcional: nombre de la institución encontrada
-    private String institucionEncontrada = "";
-
-    // Handler para actualizar coordenadas cada 5 segundos cuando la app esté en primer plano
+public class HomeEspecialista extends AppCompatActivity {
+    private static final double MAX_DISTANCE_M = 50.0;
+    private static final int REQUEST_LOCATION_PERMISSION = 100;
+    private static final int REQUEST_CAMERA = 101;
+    private static final int REQUEST_IMAGE_CAPTURE = 102;
     private Handler coordHandler = new Handler();
-    private Runnable coordRunnable = new Runnable() {
-        @Override
-        public void run() {
-            if (isOnline()) {
-                obtenerCoordenadasActual();
-                enviarCoordenadas();
-            }
-            coordHandler.postDelayed(this, 5000);
-        }
-    };
+    private Runnable coordRunnable;
+    private DataRepository repo;
+    private AttendancePrefs prefs;
 
-    // Variable para manejar evidencia (foto)
-    private Bitmap evidenciaBitmap = null;
+    private String colegioName;
+    private String docenteName;
+    private String rol;
+    private String idColegio;
+    private Location lastLocation;
+
+    private Bitmap    evidenciaBitmap;
+    private AlertDialog dialogEvidencia;
+    private ImageView ivEvidenciaPreview;
+    private Button btnTomarFoto, btnSubirEvidencia, btnCancelarEvidencia;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // Forzar modo claro
-        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         super.onCreate(savedInstanceState);
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         setContentView(R.layout.activity_home_especialista);
 
-        // Se recuperan las variables heredadas en BaseActivity: colegio, docente, rol, idcolegio.
-        btc_asistencia = findViewById(R.id.btc_asistencias_especialista);
-        btc_evidencia = findViewById(R.id.btc_evidencias_especialistas);
+        repo    = DataRepository.getInstance(this);
+        prefs   = new AttendancePrefs(this);
 
-        colegio = getIntent().getStringExtra("colegio");
-        idcolegio = getIntent().getStringExtra("idcolegio");
-        docente = getIntent().getStringExtra("docente");
-        rol = getIntent().getStringExtra("turnos"); // "Docente" o "Director"
+        colegioName = getIntent().getStringExtra("colegio");
+        docenteName = getIntent().getStringExtra("docente");
+        rol         = getIntent().getStringExtra("turnos");
+        idColegio   = getIntent().getStringExtra("idcolegio");
 
-        // Configuración del botón de asistencia
-
-        btc_asistencia.setOnClickListener(new View.OnClickListener() {
+        // Enviar coordenadas para el monitoreo
+        String url_registrocoordenadas = URLPostHelper.Coordenadas.REGISTRAR;
+        coordRunnable = new Runnable() {
             @Override
-            public void onClick(View v) {
-                // Realiza las tres acciones en serie:
-                actualizarCoordenadasIE();    // Actualizar coordenadas de la I.E.
-                obtenerCoordenadasActual();   // Obtener la ubicación actual
-                // Verificar la asistencia consultando el servidor y luego mostrar el popup:
-                verificarAsistencias(new VerificacionCallback() {
+            public void run() {
+                if (!NetworkHelper.isOnline(HomeEspecialista.this)) {
+                    coordHandler.postDelayed(this, 5000);
+                    return;
+                }
+
+                LocationHelper.requestSingleLocation(HomeEspecialista.this, new LocationHelper.LocationResultCallback() {
                     @Override
-                    public void onVerificacion(boolean entradaRegistrada, boolean salirRegistrada) {
-                        llegadaRegistrada = entradaRegistrada;
-                        salidaRegistrada = salirRegistrada;
-                        mostrarPopupAsistencia();
+                    public void onLocationResult(Location location) {
+                        repo.sendCoordinates(url_registrocoordenadas, docenteName, rol,
+                                location.getLatitude(), location.getLongitude(),
+                                new ApiCallback<Boolean>() {
+                                    @Override
+                                    public void onSuccess(Boolean ok) {
+                                    }
+                                    @Override
+                                    public void onError(Exception e) {
+                                    }
+                                });
+                    }
+                    @Override
+                    public void onError(Exception e) {
                     }
                 });
+                coordHandler.postDelayed(this, 5000);
             }
+        };
+        coordHandler.post(coordRunnable);
+
+        // Descarga la lista actualizada de colegios en background
+        String urlCole = URLPostHelper.Colegio.VER;
+        repo.updateDatacolegioRemote(urlCole, new ApiCallback<String>() {
+            @Override public void onSuccess(String result) { /* archivo interno actualizado */ }
+            @Override public void onError(Exception e) { /* se mantiene el raw */ }
         });
 
-        // Configuración del botón de evidencia
-        btc_evidencia.setOnClickListener(new View.OnClickListener() {
+        findViewById(R.id.btc_asistencias_especialista)
+                .setOnClickListener(v -> startAttendanceFlow());
+
+        // Botón de evidencias: invoca nuestro nuevo diálogo
+        ImageButton btcEvidencia = findViewById(R.id.btc_evidencias_especialistas);
+        btcEvidencia.setOnClickListener(v -> mostrarPopupEvidencia());
+
+        // Botón FICHAS
+        findViewById(R.id.btc_fichas_especialistas)
+                .setOnClickListener(v -> startFichasFlow());
+    }
+
+    /** 1. Determina si toca Entrada/Salida o ya completó ambos */
+    private String getNextTipoRegistro(String colegio) {
+        if (!prefs.isRegistered("Entrada", colegio)) return "Entrada";
+        if (!prefs.isRegistered("Salida", colegio))  return "Salida";
+        return null;
+    }
+
+    /** 2. Inicia flujo: pide ubicación y luego valida rango */
+    private void startAttendanceFlow() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(
+                    this,
+                    new String[]{ Manifest.permission.ACCESS_FINE_LOCATION },
+                    REQUEST_LOCATION_PERMISSION
+            );
+            return;
+        }
+
+        LocationHelper.requestSingleLocation(this, new LocationHelper.LocationResultCallback() {
             @Override
-            public void onClick(View v) {
-                mostrarPopupEvidencia();
+            public void onLocationResult(Location location) {
+                lastLocation = location;
+                validateRangeAndShowPopup(); //
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Toast.makeText(HomeEspecialista.this,
+                        "No se pudo obtener ubicación",
+                        Toast.LENGTH_LONG).show();
             }
         });
     }
 
-    public void fichas_especialistas(View view) {
-        fetchFichas();
+    private void mostrarPopupEvidencia() {
+        View view = LayoutInflater.from(this)
+                .inflate(R.layout.dialog_evidencia, null);
+
+        ivEvidenciaPreview = view.findViewById(R.id.ivEvidenciaPreview);
+        btnTomarFoto       = view.findViewById(R.id.btnTomarFoto);
+        btnSubirEvidencia = view.findViewById(R.id.btnSubirEvidencia);
+        btnCancelarEvidencia = view.findViewById(R.id.btnCancelarEvidencia);
+
+        // Deshabilitamos el botón de subir hasta que haya foto
+        btnSubirEvidencia.setEnabled(false);
+
+        btnTomarFoto.setOnClickListener(v -> {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                        this,
+                        new String[]{ Manifest.permission.CAMERA },
+                        REQUEST_CAMERA
+                );
+            } else {
+                dispatchTakePictureIntent();
+            }
+        });
+
+        btnSubirEvidencia.setOnClickListener(v -> {
+            if (evidenciaBitmap == null) {
+                Toast.makeText(this, "Toma una foto antes de subir", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            enviarEvidencia();
+            dialogEvidencia.dismiss();
+        });
+
+        btnCancelarEvidencia.setOnClickListener(v -> dialogEvidencia.dismiss());
+
+        dialogEvidencia = new AlertDialog.Builder(this)
+                .setView(view)
+                .create();
+        dialogEvidencia.show();
     }
 
-    /**
-     * Método para obtener las fichas:
-     * - Con conexión: consulta la URL, guarda TODOS los registros (activos e inactivos) en el archivo interno,
-     *   y luego muestra solo las fichas activas.
-     * - Sin conexión: lee el archivo y filtra las fichas activas comprobando también el rango de fechas.
-     */
-    private void fetchFichas() {
-        if (isOnline()) {
-            String urlFichas = "https://ugelcorongo.pe/ugelasistencias_docente/model/especialista/verFichas.php";
-            RequestQueue queue = Volley.newRequestQueue(HomeEspecialista.this);
-            JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(
-                    Request.Method.GET,
-                    urlFichas,
-                    null,
-                    new Response.Listener<JSONArray>() {
+    /** 3. Valida distancia ≤50 m y muestra diálogo dinámico */
+    private void validateRangeAndShowPopup() {
+        try {
+            List<String[]> rows = RawFileReader.readRawDatacolegio(this);
+            String colegioName = null;
+            boolean inRange = false;
+            double bestDist = Double.MAX_VALUE;
+            double dist = Double.MAX_VALUE;
+
+            for (String[] parts : rows) {
+                if (parts.length < 7) continue;
+
+                double lat = Double.parseDouble(parts[5]);
+                double lon = Double.parseDouble(parts[6]);
+                dist = LocationHelper.calculateDistance(
+                        lastLocation.getLatitude(),
+                        lastLocation.getLongitude(),
+                        lat,
+                        lon
+                );
+                if (dist < bestDist) {
+                    bestDist = dist;
+                    colegioName = parts[0];
+                    inRange = dist <= MAX_DISTANCE_M;
+                }
+            }
+
+            if (!inRange || colegioName == null) {
+                Toast.makeText(this,
+                        "No estás dentro del rango de ningún colegio",
+                        Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            String tipo = getNextTipoRegistro(colegioName);
+            if (tipo == null) {
+                Toast.makeText(this,
+                        "Ya completaste tus registros de hoy para " + colegioName,
+                        Toast.LENGTH_LONG).show();
+                return;
+            }
+
+            showPopupAsistencia(tipo, colegioName);
+
+            Toast.makeText(this,
+                    "latn: " + lastLocation.getLatitude() + " logn: " + lastLocation.getLongitude() + " d: " + dist,
+                    Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(this,
+                    "Error validando ubicación",
+                    Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /** 4. Diálogo para comentario y confirmación */
+    private void showPopupAsistencia(String tipoRegistro, String colegio) {
+        View view = LayoutInflater.from(this)
+                .inflate(R.layout.dialog_asistencia, null);
+        EditText etComentario = view.findViewById(R.id.et_comentario);
+        Button btnSi = view.findViewById(R.id.btn_si);
+        Button btnNo = view.findViewById(R.id.btn_no);
+
+        AlertDialog dlg = new AlertDialog.Builder(this)
+                .setTitle("Registrar " + tipoRegistro)
+                .setView(view)
+                .create();
+
+        btnSi.setOnClickListener(v -> {
+            String comentario = etComentario.getText().toString().trim();
+            String hora = new SimpleDateFormat(
+                    "yyyy-MM-dd HH:mm:ss", Locale.getDefault()
+            ).format(new Date());
+
+            AttendanceRecord rec = new AttendanceRecord(
+                    colegio,
+                    docenteName,
+                    rol,
+                    tipoRegistro,
+                    hora,
+                    "0",  // sin cálculo de tardanza
+                    comentario,
+                    lastLocation.getLatitude(),
+                    lastLocation.getLongitude()
+            );
+
+            // Envía o guarda offline y programa sync
+            String url_registrarasistencia = URLPostHelper.Asistencia.REGISTRAR;
+            repo.sendAttendance(url_registrarasistencia, rec,
+                    new ApiCallback<Boolean>() {
                         @Override
-                        public void onResponse(JSONArray response) {
-                            // Guarda TODAS las fichas en datafichas.txt (activos e inactivos)
-                            guardarFichasEnArchivo(response.toString());
-                            // Muestra el diálogo filtrando solo las fichas activas (según el campo estado)
-                            mostrarDialogoFichas(response, false);
+                        public void onSuccess(Boolean ok) {
+                            Toast.makeText(HomeEspecialista.this,
+                                    tipoRegistro + " registrada",
+                                    Toast.LENGTH_LONG).show();
+                            // Marcar en prefs
+                            prefs.setRegistered(tipoRegistro, colegio);
                         }
-                    },
-                    new Response.ErrorListener() {
                         @Override
-                        public void onErrorResponse(VolleyError error) {
-                            // Si hay error, se recurre a leer el archivo local
-                            readFichasFromFile();
+                        public void onError(Exception e) {
+                            Toast.makeText(HomeEspecialista.this,
+                                    "Sin conexión. Guardando localmente.",
+                                    Toast.LENGTH_LONG).show();
+                            prefs.setRegistered(tipoRegistro, colegio);
+                            scheduleSyncWork();
                         }
                     }
             );
-            queue.add(jsonArrayRequest);
+
+            dlg.dismiss();
+        });
+
+        btnNo.setOnClickListener(v -> dlg.dismiss());
+        dlg.show();
+    }
+
+    private void dispatchTakePictureIntent() {
+        Intent takePic = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePic.resolveActivity(getPackageManager()) != null) {
+            startActivityForResult(takePic, REQUEST_IMAGE_CAPTURE);
         } else {
-            // Sin conexión: leer la información almacenada en datafichas.txt y filtrar usando el rango de fechas.
-            readFichasFromFile();
+            Toast.makeText(this, "No se encontró cámara", Toast.LENGTH_SHORT).show();
         }
     }
 
-    /**
-     * Construye y muestra el diálogo con la lista de fichas.
-     * Si el parámetro offline es true, se asume que ya se filtró usando el rango de fechas.
-     * En caso contrario, se filtra solo por el campo "estado".
-     */
-    private void mostrarDialogoFichas(JSONArray fichas, boolean offline) {
-        final List<String> fichasList = new ArrayList<>();
-        try {
-            for (int i = 0; i < fichas.length(); i++) {
-                JSONObject obj = fichas.getJSONObject(i);
-                // En modo online se filtra por estado activo,
-                // y en modo offline ya se pasó por la validación del rango de fechas.
-                if (offline) {
-                    fichasList.add(obj.getString("nombre"));
-                } else {
-                    if (obj.getString("estado").equalsIgnoreCase("activo")) {
-                        fichasList.add(obj.getString("nombre"));
-                    }
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    private void enviarEvidencia() {
+        String urlEvidencia = URLPostHelper.Imagen.REGISTRAR;
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        View popupView = getLayoutInflater().inflate(R.layout.dialog_fichas, null);
-        builder.setView(popupView);
-        builder.setTitle("Fichas");
-
-        builder.setNegativeButton("Cerrar", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.dismiss();
-            }
-        });
-
-        ListView listViewFichas = popupView.findViewById(R.id.listFichas);
-        FichasAdapter adapter = new FichasAdapter(this, fichasList, colegio, idcolegio, docente, rol);
-        listViewFichas.setAdapter(adapter);
-
-        AlertDialog dialog = builder.create();
-        dialog.show();
-    }
-
-    /**
-     * Guarda la cadena recibida en un archivo interno.
-     */
-    private void guardarFichasEnArchivo(String data) {
-        try {
-            FileOutputStream fos = openFileOutput("datafichas.txt", Context.MODE_PRIVATE);
-            fos.write(data.getBytes());
-            fos.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Lee el archivo datafichas.txt y muestra la información.
-     */
-    private void readFichasFromFile() {
-        try {
-            FileInputStream fis = openFileInput("datafichas.txt");
-            InputStreamReader isr = new InputStreamReader(fis);
-            BufferedReader reader = new BufferedReader(isr);
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line);
-            }
-            fis.close();
-            String data = sb.toString();
-            if (data.trim().startsWith("[")) {
-                JSONArray jsonArray = new JSONArray(data);
-                // En modo offline se filtra también comprobando que la fecha actual esté dentro del rango
-                jsonArray = filtrarFichasActivasOffline(jsonArray);
-                mostrarDialogoFichas(jsonArray, true);
-            } else {
-                // Caso de archivo en formato de texto plano (línea por línea)
-                ArrayList<JSONObject> fichasList = new ArrayList<>();
-                String[] lines = data.split("\n");
-                for (String l : lines) {
-                    if (l.trim().isEmpty()) continue;
-                    // Se espera formato: nombre ficha; fecha_inicio; fecha_termino; estado
-                    String[] parts = l.split(";");
-                    if (parts.length >= 4) {
-                        JSONObject obj = new JSONObject();
-                        obj.put("nombre", parts[0].trim());
-                        obj.put("fecha_inicio", parts[1].trim());
-                        obj.put("fecha_termino", parts[2].trim());
-                        obj.put("estado", parts[3].trim());
-                        fichasList.add(obj);
-                    }
-                }
-                JSONArray jsonArray = new JSONArray();
-                for (JSONObject obj : fichasList) {
-                    jsonArray.put(obj);
-                }
-                // Se filtra en modo offline
-                jsonArray = filtrarFichasActivasOffline(jsonArray);
-                mostrarDialogoFichas(jsonArray, true);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            // En caso de error se muestra el diálogo sin registros
-            mostrarDialogoFichas(new JSONArray(), true);
-        }
-    }
-
-    /**
-     * En modo offline, filtra las fichas comprobando que:
-     * 1) El estado sea "activo"
-     * 2) La fecha actual se encuentre entre fecha_inicio y fecha_termino
-     */
-    private JSONArray filtrarFichasActivasOffline(JSONArray fichas) {
-        JSONArray result = new JSONArray();
-        try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            Date now = new Date();
-
-            // Recorrer cada ficha y actualizar su estado según el rango de fechas
-            for (int i = 0; i < fichas.length(); i++) {
-                JSONObject obj = fichas.getJSONObject(i);
-                Date inicio = sdf.parse(obj.getString("fecha_inicio"));
-                Date fin = sdf.parse(obj.getString("fecha_termino"));
-
-                // Si la fecha actual se encuentra entre inicio y fin, la ficha es activa
-                if (now.compareTo(inicio) >= 0 && now.compareTo(fin) <= 0) {
-                    obj.put("estado", "activo");
-                    result.put(obj);
-                } else {
-                    obj.put("estado", "inactivo");
-                }
-            }
-
-            // Actualizamos el archivo interno con la versión modificada del JSONArray
-            guardarFichasEnArchivo(fichas.toString());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return result;
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        // La gestión de la inactividad y de la sesión se maneja en BaseActivity.
-        if ("Especialista".equalsIgnoreCase(rol)) {
-            coordHandler.post(coordRunnable);
-            actualizarCoordenadasIEBase();
-            obtenerCoordenadasActual();
-        }
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        coordHandler.removeCallbacks(coordRunnable);
-    }
-
-    // ---------------------------------------------------------------
-    // Métodos de georreferenciación y cálculo de distancia
-    // ---------------------------------------------------------------
-
-    /**
-     * Calcula la distancia (en metros) entre dos pares de coordenadas usando la fórmula de Haversine.
-     */
-    public double calcularDistancia(double lat1, double lon1, double lat2, double lon2) {
-        double radioTierra = 6371.0;  // Radio de la Tierra en kilómetros
-        double dLat = Math.toRadians(lat2 - lat1);
-        double dLon = Math.toRadians(lon2 - lon1);
-        double a = Math.sin(dLat / 2) * Math.sin(dLat / 2)
-                + Math.cos(Math.toRadians(lat1))
-                * Math.cos(Math.toRadians(lat2))
-                * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return radioTierra * c * 1000;  // Convertir a metros
-    }
-
-    /**
-     * Lee el archivo "datacolegiofichas.txt", que contiene varias instituciones educativas,
-     * y determina en cuál se encuentra el especialista (regla: distancia ≤ 50 m).
-     * Se selecciona la institución que cumpla con la condición y tenga la menor distancia.
-     */
-    private void loadRefCoordinates() {
-        try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(openFileInput("datacolegio.txt")));
-            String line;
-            double minDistance = Double.MAX_VALUE;
-            boolean found = false;
-            while ((line = reader.readLine()) != null) {
-                String[] partes = line.split(";");
-                if (partes.length >= 4) { // Se aseguran los campos: [2]=latitud, [3]=longitud
-                    double lat = Double.parseDouble(partes[5].trim());
-                    double lon = Double.parseDouble(partes[6].trim());
-                    double distance = calcularDistancia(GlobalData.latActual, GlobalData.lonActual, lat, lon);
-                    // Si la distancia es ≤ 50 m y es la más cercana encontrada hasta ahora
-                    if (distance <= 50 && distance < minDistance) {
-                        minDistance = distance;
-                        refLatitud = lat;
-                        refLongitud = lon;
-                        institucionEncontrada = partes[0].trim();  // El nombre (índice 0)
-                        found = true;
-                    }
-                }
-            }
-            reader.close();
-            if (!found) {
-                // Si ninguna institución se encuentra dentro de 50 m, se asigna por defecto la posición actual
-                refLatitud = GlobalData.latActual;
-                refLongitud = GlobalData.lonActual;
-                institucionEncontrada = "Desconocida";
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            // En caso de error, se asigna la posición actual como referencia
-            refLatitud = GlobalData.latActual;
-            refLongitud = GlobalData.lonActual;
-            institucionEncontrada = "Desconocida";
-        }
-    }
-
-    // ---------------------------------------------------------------
-    // Métodos de registro de asistencia
-    // ---------------------------------------------------------------
-
-    /**
-     * Muestra un popup para registrar la asistencia.
-     * Para el especialista, si aún no se ha registrado la "Entrada", se toma como Entrada; si ya se registró, se toma como Salida.
-     */
-    private void mostrarPopupAsistencia() {
-        LayoutInflater inflater = LayoutInflater.from(this);
-        View dialogView = inflater.inflate(R.layout.dialog_asistencia, null);
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setView(dialogView);
-        final AlertDialog dialog = builder.create();
-
-        TextView tvTitulo = dialogView.findViewById(R.id.tv_asistencia_titulo);
-        final EditText etComentario = dialogView.findViewById(R.id.et_comentario);
-        Button btnSi = dialogView.findViewById(R.id.btn_si);
-        Button btnNo = dialogView.findViewById(R.id.btn_no);
-
-        String tipoRegistro = "";
-        int tardanzaMinutos = 0; // Para el especialista se omite el cálculo de tardanza
-
-        if (!llegadaRegistrada) {
-            tipoRegistro = "Entrada";
-        } else if (!salidaRegistrada) {
-            tipoRegistro = "Salida";
-        }
-
-        if (tipoRegistro.equals("Entrada")) {
-            tvTitulo.setText("Registrar su hora de ingreso");
-        } else if (tipoRegistro.equals("Salida")) {
-            tvTitulo.setText("Registrar su hora de salida");
-        }
-
-        final String finalTipoRegistro = tipoRegistro;
-        final int finalTardanzaMinutos = tardanzaMinutos;
-
-        btnSi.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String comentario = etComentario.getText().toString().trim();
-                String horaRegistro = obtenerFechaHoraActual(); // Método heredado de BaseActivity
-                enviarAsistencia(comentario, horaRegistro, finalTipoRegistro, String.valueOf(finalTardanzaMinutos));
-                if (finalTipoRegistro.equals("Entrada")) {
-                    llegadaRegistrada = true;
-                    horaLlegada = horaRegistro;
-                } else if (finalTipoRegistro.equals("Salida")) {
-                    salidaRegistrada = true;
-                    horaSalida = horaRegistro;
-                }
-                Toast.makeText(HomeEspecialista.this,
-                        finalTipoRegistro + " registrada a las " + horaRegistro,
-                        Toast.LENGTH_LONG).show();
-                dialog.dismiss();
-            }
-        });
-
-        btnNo.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) { dialog.dismiss(); }
-        });
-
-        dialog.show();
-    }
-
-    /**
-     * Envía los datos de asistencia al servidor usando Volley.
-     * En caso de error (por ejemplo, sin conexión), se guarda el registro localmente
-     * llamando al método correspondiente de OfflineStorageManager.
-     */
-    private void enviarAsistencia(String comentario, String horaRegistro, String tipoRegistro, String tardanza) {
-        String url = "https://ugelcorongo.pe/ugelasistencias_docente/sesion.php";
-        StringRequest postRequest = new StringRequest(Request.Method.POST, url,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        // Registro enviado correctamente.
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(HomeEspecialista.this,
-                                "Sin conexión. Guardando asistencia localmente.",
-                                Toast.LENGTH_LONG).show();
-                        String coordenadas = GlobalData.latActual + "," + GlobalData.lonActual + "|" +
-                                GlobalData.latActual + "," + GlobalData.lonActual + "_sinconexion";
-                        OfflineStorageManager.saveAssistanceRecord(
-                                HomeEspecialista.this,
-                                colegio,
-                                docente,
-                                comentario,
-                                horaRegistro,
-                                tipoRegistro,
-                                tardanza,
-                                rol,
-                                coordenadas
-                        );
-                    }
-                }) {
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<>();
-                params.put("colegio", colegio);
-                params.put("docente", docente);
-                params.put("horaRegistro", horaRegistro);
-                params.put("tipoRegistro", tipoRegistro);
-                params.put("tardanza", tardanza);
-                return params;
-            }
-        };
-        RequestQueue requestQueue = Volley.newRequestQueue(this);
-        requestQueue.add(postRequest);
-    }
-
-    // ---------------------------------------------------------------
-    // Métodos para la evidencia (foto)
-    // ---------------------------------------------------------------
-
-    /**
-     * Muestra un popup para que el especialista capture y suba evidencia (foto).
-     */
-    private void mostrarPopupEvidencia() {
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_evidencia, null);
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setView(dialogView);
-        final AlertDialog dialog = builder.create();
-
-        final ImageView ivEvidenciaPreview = dialogView.findViewById(R.id.ivEvidenciaPreview);
-        Button btnTomarFoto = dialogView.findViewById(R.id.btnTomarFoto);
-        Button btnSubirEvidencia = dialogView.findViewById(R.id.btnSubirEvidencia);
-        Button btnCancelarEvidencia = dialogView.findViewById(R.id.btnCancelarEvidencia);
-
-        btnTomarFoto.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-                Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-                    startActivityForResult(takePictureIntent, 102);
-                } else {
-                    Toast.makeText(HomeEspecialista.this, "No se encontró una cámara", Toast.LENGTH_SHORT).show();
-                }
-            }
-        });
-
-        btnSubirEvidencia.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (evidenciaBitmap == null) {
-                    Toast.makeText(HomeEspecialista.this, "Toma una foto antes de subir", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                enviarEvidencia(evidenciaBitmap);
-                dialog.dismiss();
-            }
-        });
-
-        btnCancelarEvidencia.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) { dialog.dismiss(); }
-        });
-
-        dialog.show();
-    }
-
-    /**
-     * Envía la evidencia (imagen) al servidor.
-     * Si no hay conexión, se guarda la imagen localmente llamando a OfflineStorageManager.
-     */
-    private void enviarEvidencia(final Bitmap bitmapEvidencia) {
-        if (!isOnline()) {
-            String coordenadas = GlobalData.latActual + "," + GlobalData.lonActual + "|" +
-                    GlobalData.latActual + "," + GlobalData.lonActual + "_sinconexion";
-            OfflineStorageManager.saveImageOffline(HomeEspecialista.this, colegio, docente, rol, idcolegio, bitmapEvidencia, coordenadas);
-            Toast.makeText(HomeEspecialista.this, "Sin conexión. Evidencia guardada localmente.", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        String urlEvidencia = "https://ugelcorongo.pe/ugelasistencias_docente/model/file/img/uploadEvidencia.php";
-        VolleyMultipartRequest multipartRequest = new VolleyMultipartRequest(
-                Request.Method.POST,
+        repo.sendEvidence(
                 urlEvidencia,
-                new Response.Listener<NetworkResponse>() {
+                colegioName,
+                docenteName,
+                rol,
+                idColegio,
+                evidenciaBitmap,
+                new ApiCallback<Boolean>() {
                     @Override
-                    public void onResponse(NetworkResponse response) {
-                        Toast.makeText(HomeEspecialista.this, "Evidencia subida correctamente.", Toast.LENGTH_SHORT).show();
+                    public void onSuccess(Boolean ok) {
+                        Toast.makeText(
+                                HomeEspecialista.this,
+                                "Evidencia subida correctamente",
+                                Toast.LENGTH_LONG
+                        ).show();
                     }
-                },
-                new Response.ErrorListener() {
                     @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(HomeEspecialista.this, "Error al subir evidencia. Guardando localmente.", Toast.LENGTH_SHORT).show();
-                        String coordenadas = GlobalData.latActual + "," + GlobalData.lonActual + "|" +
-                                GlobalData.latActual + "," + GlobalData.lonActual + "_sinconexion";
-                        OfflineStorageManager.saveImageOffline(HomeEspecialista.this, colegio, docente, rol, idcolegio, bitmapEvidencia, coordenadas);
+                    public void onError(Exception e) {
+                        Toast.makeText(
+                                HomeEspecialista.this,
+                                "Sin conexión. Evidencia guardada localmente.",
+                                Toast.LENGTH_LONG
+                        ).show();
+                        scheduleSyncWork();
                     }
                 }
-        ) {
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<>();
-                params.put("colegio", colegio);
-                params.put("docente", docente);
-                params.put("turno", rol);
-                params.put("FK_idcolegio", idcolegio);
-                return params;
-            }
-
-            @Override
-            protected Map<String, DataPart> getByteData() {
-                Map<String, DataPart> params = new HashMap<>();
-                ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                bitmapEvidencia.compress(Bitmap.CompressFormat.JPEG, 80, bos);
-                byte[] evidenciaBytes = bos.toByteArray();
-                String fileName = System.currentTimeMillis() + ".jpg";
-                params.put("evidencia", new DataPart(fileName, evidenciaBytes, "image/jpeg"));
-                return params;
-            }
-        };
-
-        RequestQueue requestQueue = Volley.newRequestQueue(this);
-        requestQueue.add(multipartRequest);
+        );
     }
 
-    // ---------------------------------------------------------------
-    // Otros métodos
-    // ---------------------------------------------------------------
+    /** Comprueba permiso de ubicación antes de listar las fichas */
+    private void startFichasFlow() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
 
-    /**
-     * Envía las coordenadas actuales del especialista al servidor.
-     */
-    private void enviarCoordenadas() {
-        String urlCoords = "https://ugelcorongo.pe/ugelasistencias_docente/model/rastreo/actualizar-coordenadas.php";
-        JSONObject params = new JSONObject();
-        try {
-            params.put("latitude", GlobalData.latActual);
-            params.put("longitude", GlobalData.lonActual);
-            params.put("usuario", docente);
-            params.put("rol", rol);
-        } catch (Exception e) {
-            Log.e("SEND_COORDS", "Error armando JSON", e);
+            ActivityCompat.requestPermissions(
+                    this,
+                    new String[]{ Manifest.permission.ACCESS_FINE_LOCATION },
+                    REQUEST_LOCATION_PERMISSION
+            );
+        } else {
+            loadAndShowFichas();
         }
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.POST, urlCoords, params,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        Log.d("SEND_COORDS", "Respuesta: " + response.toString());
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("SEND_COORDS", "Error: ", error);
-                    }
-                });
-        RequestQueue queue = Volley.newRequestQueue(this);
-        queue.add(request);
     }
 
-    /**
-     * Devuelve la fecha y hora actual en formato "yyyy-MM-dd HH:mm:ss"
-     * usando la zona horaria America/Lima.
-     */
-    private String obtenerFechaHoraActual() {
-        TimeZone tz = TimeZone.getTimeZone("America/Lima");
-        Calendar calendar = Calendar.getInstance(tz);
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-        sdf.setTimeZone(tz);
-        return sdf.format(calendar.getTime());
+    /** Llama al repositorio para descargar o leer offline las fichas */
+    private void loadAndShowFichas() {
+        String url = URLPostHelper.Fichas.VER;
+        repo.fetchFichas(url, new ApiService.ApiCallback<JSONArray>() {
+            @Override
+            public void onSuccess(JSONArray fichasJson) {
+                runOnUiThread(() -> mostrarDialogoFichas(fichasJson));
+            }
+            @Override
+            public void onError(Exception e) {
+                runOnUiThread(() ->
+                        Toast.makeText(HomeEspecialista.this,
+                                "No se pudo cargar fichas",
+                                Toast.LENGTH_SHORT).show()
+                );
+            }
+        });
     }
 
-    /**
-     * Procesa el resultado de la actividad para la captura de imagen.
-     */
+    /** Muestra diálogo con la lista usando tu FichasAdapter */
+    private void mostrarDialogoFichas(JSONArray fichasJson) {
+        // Extraer solo el campo “nombre” de cada objeto
+        List<String> lista = new ArrayList<>();
+        for (int i = 0; i < fichasJson.length(); i++) {
+            lista.add(fichasJson.optJSONObject(i).optString("nombre"));
+        }
+
+        View popup = getLayoutInflater()
+                .inflate(R.layout.dialog_fichas, null);
+        AlertDialog dlg = new AlertDialog.Builder(this)
+                .setTitle("Fichas")
+                .setView(popup)
+                .setNegativeButton("Cerrar", (d,w)->d.dismiss())
+                .create();
+
+        ListView lv = popup.findViewById(R.id.listFichas);
+        FichasAdapter adapter = new FichasAdapter(
+                this,
+                lista,
+                colegioName,
+                idColegio,
+                docenteName,
+                rol
+        );
+        lv.setAdapter(adapter);
+        dlg.show();
+    }
+
+    /** 5. Programa reintento cuando haya red */
+    private void scheduleSyncWork() {
+        Constraints cons = new Constraints.Builder()
+                .setRequiredNetworkType(NetworkType.CONNECTED)
+                .build();
+
+        OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(SyncAttendanceWorker.class)
+                .setConstraints(cons)
+                .build();
+
+        WorkManager.getInstance(this).enqueue(work);
+    }
+
+    // Atiende la respuesta al pedir permiso
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 102 && resultCode == RESULT_OK && data != null) {
-            evidenciaBitmap = (Bitmap) data.getExtras().get("data");
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == REQUEST_LOCATION_PERMISSION) {
+            if (grantResults.length > 0
+                    && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Una vez concedido, reintenta el flujo
+                startAttendanceFlow();
+            } else {
+                Toast.makeText(this,
+                        "Permiso de ubicación requerido para continuar",
+                        Toast.LENGTH_LONG).show();
+            }
         }
     }
 }
